@@ -1,5 +1,14 @@
 /*
 Author : Jobin Augustine 
+
+This contains main() of the program.
+Functionality:
+1. Accepts the command line parameters and parse them.
+2. Holds the PostgreSQL parameter file name in inputFileName and log_line_prefix in lineFormat
+3. Uses "tokenizer" for preparing loglinelocation. REFER tokenizer class for details.
+  where "loglinelocation" data strcuture for holding the markers in a log line.
+4. "loglinelocation" must not be empty for further processing
+
 */
 
 #include "logFileParser.h"
@@ -8,11 +17,12 @@ Author : Jobin Augustine
 #include <iostream>
 
 
+//helper function to check wether "opt" is there in "args"
 bool chkOptExist(const std::vector<std::string> & args,const std::string & opt){
 	return find(args.begin(), args.end(),opt) != args.end();
 }
 
-
+//helper function to retun the value of "opt" in "args"
 const std::string & getOptValue(const std::vector<std::string> & args,const std::string & opt){
       std::vector<std::string>::const_iterator iter;
       iter = find(args.begin(), args.end(),opt);
@@ -26,6 +36,7 @@ const std::string & getOptValue(const std::vector<std::string> & args,const std:
       }
 }
 
+//
 int main(int argc, char* argv[]) {
 
     //Starting of commandline parsing
@@ -66,6 +77,8 @@ int main(int argc, char* argv[]) {
     tokenizer.genExprStr(lineFormat);
     tokenizer.tokenize(logfile);
     tokenizer.printloglinelocation();
+    
+    //tokenizer is not needed beyond this point where it prepares the loglinelocation
     auto loglinelocation = std::move(tokenizer.getToken());
     if (loglinelocation.empty() ){
         cout<<"Exiting because unable to get the line format"<<endl;
@@ -85,6 +98,8 @@ int main(int argc, char* argv[]) {
 //Start of Parsing
 
     logFileParser FileParser(logfile,loglinelocation);
+    //Rest the file descriptor back to starting point of the file 
+    //because tokenizer alrady advanced the file discriptor for verifying the log line
     FileParser.resetFD();
     FileParser.parse();
     FileParser.printSqlidSqlmap();
