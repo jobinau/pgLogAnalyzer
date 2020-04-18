@@ -1,14 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   lineTokenizer.cpp
  * Author: Jobin Augustine
- * 
- * Created on 29 August, 2017, 3:02 PM
  */
 
 #include "lineTokenizer.h"
@@ -24,11 +16,18 @@ lineTokenizer::~lineTokenizer() = default;
 void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     exprStr = lineFormat_in;
     lineFormat = lineFormat_in;
+
+
     auto loc=exprStr.find("%t");
     if (loc<200) {
         exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+[\.0-9]) [A-Z]{3})EXPR");
 }
-    
+
+    loc=exprStr.find("%m");
+    if (loc<200) {
+        exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+\.\d+) [A-Z]{3})EXPR");
+}
+
     loc = exprStr.find("%p");
     if (loc<200) {
         exprStr.replace(loc,2,R"EXPR([0-9]{3,9})EXPR");
