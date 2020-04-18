@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     
     lineTokenizer tokenizer;
     tokenizer.genExprStr(lineFormat);
-    tokenizer.tokenize(logfile);
+    tokenizer.logFileTokenize(logfile);
     tokenizer.printloglinelocation();
     
     //tokenizer is not needed beyond this point where it prepares the loglinelocation

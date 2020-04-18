@@ -6,10 +6,12 @@
 #include "lineTokenizer.h"
 #include <iostream>
 
+//Currently this default constructor is used in the main
 lineTokenizer::lineTokenizer() = default;
 
-lineTokenizer::lineTokenizer(const lineTokenizer&  /*orig*/) {
-}
+
+// lineTokenizer::lineTokenizer(const lineTokenizer&  /*orig*/) {
+// }
 
 lineTokenizer::~lineTokenizer() = default;
 
@@ -17,51 +19,52 @@ void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     exprStr = lineFormat_in;
     lineFormat = lineFormat_in;
 
-
     auto loc=exprStr.find("%t");
-    if (loc<200) {
+
+    if (loc<200) 
         exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+[\.0-9]) [A-Z]{3})EXPR");
-}
 
     loc=exprStr.find("%m");
-    if (loc<200) {
+    if (loc<200)
         exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+\.\d+) [A-Z]{3})EXPR");
-}
 
     loc = exprStr.find("%p");
-    if (loc<200) {
+    if (loc<200)
         exprStr.replace(loc,2,R"EXPR([0-9]{3,9})EXPR");
-}
     
     loc = exprStr.find("%l");
-    if (loc < 200) {
+    if (loc < 200)
         exprStr.replace(loc ,2,R"EXPR([0-9]{1,8})EXPR");
-}
     
     loc = exprStr.find("%u");
-    if (loc < 200) {
+    if (loc < 200)
         exprStr.replace(loc,2,R"EXPR([\w\[\]]*)EXPR");
-}
     
     loc = exprStr.find("%d");
-    if (loc < 200) {
+    if (loc < 200)
         exprStr.replace(loc,2,R"EXPR([\w\[\]]*)EXPR");
-}
     
     loc = exprStr.find("%a");
-    if (loc < 200) {
+    if (loc < 200)
         exprStr.replace(loc,2,R"EXPR([\w\[\]]*)EXPR");
-}
     
     loc = exprStr.find("%h");
-    if (loc < 200) {
+    if (loc < 200)
         exprStr.replace(loc,2,R"EXPR([\w\.\[\]]*)EXPR");
-}
+
+    //if %q is found, replace it with null string
+    loc = exprStr.find("%q");
+    if (loc < 200) 
+        exprStr.replace(loc,2,R"EXPR()EXPR");
+
     cout<<"exprStr is :"<<exprStr<<endl;
     //expr = std::move(expr1);
 }
 
-bool lineTokenizer::assessLogLine(const string & logline){
+
+//Prepare Log Line Location datastructure from given sample line
+//Retunrs "true" if match is found. "false" if match is not found.
+bool lineTokenizer::prepareLogLineLocation(const string & logline){
     smatch matches;
     int order = 0;
     int offset = 0;
@@ -101,7 +104,7 @@ bool lineTokenizer::assessLogLine(const string & logline){
     return match;
 }
 
-bool lineTokenizer::tokenize(ifstream & logfile){
+bool lineTokenizer::logFileTokenize(ifstream & logfile){
     int matched = 0;
     int notmatched = 0;
     string logline;
@@ -110,7 +113,7 @@ bool lineTokenizer::tokenize(ifstream & logfile){
     {
         //auto match = regex_search(logline,matches,expr);
         //cout<<logline<<endl;
-        auto match = assessLogLine(logline);
+        auto match = prepareLogLineLocation(logline);
         //cout<<(match? "Matched" : "Not Matched")<<endl;
         if(match){
             matched++;        
