@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     tokenizer.printloglinelocation();
     
     //tokenizer is not needed beyond this point where it prepares the loglinelocation
-    auto loglinelocation = std::move(tokenizer.getToken());
+    auto loglinelocation = tokenizer.getToken();
     if (loglinelocation.empty() ){
         cout<<"Exiting because unable to get the line format"<<endl;
         return 0;

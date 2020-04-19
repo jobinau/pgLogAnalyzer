@@ -7,26 +7,33 @@
 #include <iostream>
 
 //Currently this default constructor is used in the main
-lineTokenizer::lineTokenizer() = default;
+// lineTokenizer::lineTokenizer() = default;
 
 
 // lineTokenizer::lineTokenizer(const lineTokenizer&  /*orig*/) {
 // }
 
-lineTokenizer::~lineTokenizer() = default;
+//lineTokenizer::~lineTokenizer() = default;
 
 void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     exprStr = lineFormat_in;
     lineFormat = lineFormat_in;
 
+   //%t => Timestamp without Milliseconds
     auto loc=exprStr.find("%t");
 
     if (loc<200) 
         exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+[\.0-9]) [A-Z]{3})EXPR");
 
+    //%m => Timestamp with Millisecods
     loc=exprStr.find("%m");
     if (loc<200)
         exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+\.\d+) [A-Z]{3})EXPR");
+
+    //%s => Timestamp of the Process startup
+    loc = exprStr.find("%s");
+    if (loc < 200)
+        exprStr.replace(loc,2,R"EXPR((\d+-\d+-\d+ \d+:\d+:\d+) [A-Z]{3})EXPR");
 
     loc = exprStr.find("%p");
     if (loc<200)
@@ -36,6 +43,16 @@ void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     if (loc < 200)
         exprStr.replace(loc ,2,R"EXPR([0-9]{1,8})EXPR");
     
+    //%r => IP address of the client with remote port in bracket like : 10.123.200.65(60612)
+    loc = exprStr.find("%r");
+    if (loc < 200) 
+        exprStr.replace(loc ,2,R"EXPR([\w\.\(\)]+)EXPR");
+
+    //%i => Statement type like: SELECT
+    loc = exprStr.find("%i");
+    if (loc < 200) 
+        exprStr.replace(loc ,2,R"EXPR(\w+)EXPR");
+
     loc = exprStr.find("%u");
     if (loc < 200)
         exprStr.replace(loc,2,R"EXPR([\w\[\]]*)EXPR");
@@ -58,7 +75,7 @@ void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
         exprStr.replace(loc,2,R"EXPR()EXPR");
 
     cout<<"exprStr is :"<<exprStr<<endl;
-    //expr = std::move(expr1);
+    //regExpr=
 }
 
 
@@ -68,13 +85,12 @@ bool lineTokenizer::prepareLogLineLocation(const string & logline){
     smatch matches;
     int order = 0;
     int offset = 0;
-    //preparing regular expression everytime could be a problem
-    static regex expr(exprStr);
+    //Note preparing regular expression everytime could be a problem, Try shifting to genExprStr function
+    regex expr(exprStr);
     auto match = regex_search(logline,matches,expr);
-    //cout<<"Line format is :"<<lineFormat<<endl;
+    cout<<"Line format is :"<<lineFormat<<endl;
     if(match && loglinelocation.empty()){
         //cout<<"Got the first match"<<endl;
-        
         bool isEscape = false;
         bool getEndMark = false;
         for (auto i : lineFormat){
@@ -121,8 +137,8 @@ bool lineTokenizer::logFileTokenize(ifstream & logfile){
         else{
             notmatched++;
         }
-        //after reading 200 lines break
-        if ((matched+notmatched)> 200) {
+        //after reading 20 lines break
+        if ((matched+notmatched)> 20) {
             break;
 }
     }
@@ -134,13 +150,18 @@ bool lineTokenizer::logFileTokenize(ifstream & logfile){
     return true;
 }
 
+void lineTokenizer::clearLogLineLocation() noexcept {
+    loglinelocation.clear();
+}
+
 void lineTokenizer::printloglinelocation() noexcept {
-    cout<<"printloglinelocation"<<endl;
+    cout<<"====loglinelocation=====\n";
     for (auto i : loglinelocation){
         cout<<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<")"<<endl;
     }
+    cout<<"========================\n";
 }
 
-vector<tuple<char,int,int,char>>& lineTokenizer::getToken(){
+vector<tuple<char,int,int,char>> lineTokenizer::getToken(){
     return loglinelocation;
 }

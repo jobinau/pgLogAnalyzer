@@ -18,16 +18,18 @@ private:
     vector<tuple<char,int,int,char>> loglinelocation;
     string lineFormat;
     string exprStr;
+    regex regExpr;
 public:
-    lineTokenizer();
+
     //lineTokenizer(vector<tuple<char,int,int,char>> & loglinelocation);
     //lineTokenizer(const lineTokenizer& orig);
     void genExprStr(const string & lineFormat_in) noexcept;
     bool prepareLogLineLocation(const string & logline);
     bool logFileTokenize(ifstream & logfile);
+    void clearLogLineLocation() noexcept;
     void printloglinelocation() noexcept;
-    vector<tuple<char,int,int,char>>& getToken();
-    virtual ~lineTokenizer();
+    vector<tuple<char,int,int,char>> getToken();
+    
 };
 
 #endif /* LINETOKENIZER_H */

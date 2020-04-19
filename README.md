@@ -1,18 +1,20 @@
 # pgLogAnalyser
-Modern C++ program to analyze postgres logs. Speed matters.
+Modern C++ framework and program to analyze postgres logs. Speed matters.
+This designed to be modular so that the parts of the code can be reused.
+Used only C++ STLs like regex,vector,tuple etc for highest portability.
 
 ## Features
 * Created as a generic Simple example of Parsing log file of Postgres.
 * Code base can be reused in other application.
-* Regular expression is used only for detection and verification of log line
+* Regular expression is used only for initial detection and verification of log line
 * Parsing of log file faster string algorithms (currently work in progress)
 
-##Installation
-Need to have a compiler with Standard C++11 support, GCC 6+ or Clang/LLVM version 8+ is recommended.
-go to directory and just run
-./make 
+## Installation
+The system Need to have a compiler with Standard C++11 support to build the source code. GCC 6+ or Clang/LLVM version 8+ is recommended.  
+Go to directory and just run:  
+```./make``` 
 
-## User Doc
+## Usage 
 ```./pgloganalyzer -f postgres.log```  
 or  
 ```./pgloganalyzer -f ~/postgres.log -p "%t [%p]: [%l-1] user=%u,db=%d,host=%h"```
@@ -20,15 +22,21 @@ or
 
 ## Technical Doc
   
-Data structure 
+The program flow is designed as follows:
+1. log_line_prefix is converted into Regular Expression (Comptiable with ECMAScript).
+2. Use C++11 standard regular expression libraries for parsing first few lines of the log file.
+3. If the Regular expression is successful in finding the matches, A data structure with location and offsets are created for further parsing the log file in a much faster and efficient way. This datastructure (**loglinelocation**) is described in the following sections
+4. Start parsing the log file from the biggining till the end.
+
+The Important Data structure in the entire framework is: 
 
 ```c++
 vector<tuple<char,int,int,char>> loglinelocation;
 ```
 
-This is an alternate representation of regular expression for parsing the log lines
+This is a representation of regular expression for parsing the log lines.
 
-### loglinelocation explanation:
+### **loglinelocation** explanation:
 1. First character of the tuple indicates the the log\_line\_prefix escape character like 't' for '%t', 'p' for '%p' etc.
      Please refer [Postgres documentation here](https://www.postgresql.org/docs/9.5/static/runtime-config-logging.html#GUC-LOG-LINE-PREFIX) for details of escape sequences used in postgres log.
 2. Second integer is relative position of the escape character, if log\_line\_prefix is like:
