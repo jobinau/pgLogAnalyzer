@@ -21,8 +21,6 @@ private:
     regex regExpr;
 public:
 
-    //lineTokenizer(vector<tuple<char,int,int,char>> & loglinelocation);
-    //lineTokenizer(const lineTokenizer& orig);
     void genExprStr(const string & lineFormat_in) noexcept;
     bool prepareLogLineLocation(const string & logline);
     bool logFileTokenize(ifstream & logfile);

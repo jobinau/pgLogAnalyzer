@@ -1,14 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   logFileParser.cpp
  * Author: Jobin Augustine
- * 
- * Created on 27 August, 2017, 5:26 PM
  */
 
 #include "logFileParser.h"

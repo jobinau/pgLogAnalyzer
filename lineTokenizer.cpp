@@ -6,15 +6,8 @@
 #include "lineTokenizer.h"
 #include <iostream>
 
-//Currently this default constructor is used in the main
-// lineTokenizer::lineTokenizer() = default;
-
-
-// lineTokenizer::lineTokenizer(const lineTokenizer&  /*orig*/) {
-// }
-
-//lineTokenizer::~lineTokenizer() = default;
-
+//Generate the Regular Expression string based on the log_line_prefix.
+//Later use the same to generate the regex object
 void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     exprStr = lineFormat_in;
     lineFormat = lineFormat_in;
@@ -75,7 +68,11 @@ void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
         exprStr.replace(loc,2,R"EXPR()EXPR");
 
     cout<<"exprStr is :"<<exprStr<<endl;
-    //regExpr=
+    regex expr(exprStr);
+    regExpr = expr;   //copy assginement
+
+    //regExpr = [=](){regex expr(exprStr); return expr;};
+
 }
 
 
@@ -87,7 +84,8 @@ bool lineTokenizer::prepareLogLineLocation(const string & logline){
     int offset = 0;
     //Note preparing regular expression everytime could be a problem, Try shifting to genExprStr function
     regex expr(exprStr);
-    auto match = regex_search(logline,matches,expr);
+    //auto match = regex_search(logline,matches,expr);
+    auto match = regex_search(logline,matches,regExpr);
     cout<<"Line format is :"<<lineFormat<<endl;
     if(match && loglinelocation.empty()){
         //cout<<"Got the first match"<<endl;
@@ -120,6 +118,7 @@ bool lineTokenizer::prepareLogLineLocation(const string & logline){
     return match;
 }
 
+//Open the log file and scan for first few lines and make sure that the  pattern is matching
 bool lineTokenizer::logFileTokenize(ifstream & logfile){
     int matched = 0;
     int notmatched = 0;
@@ -150,10 +149,13 @@ bool lineTokenizer::logFileTokenize(ifstream & logfile){
     return true;
 }
 
+//Clear the loglinelocation data strcuture using the STL clear()
+//This ensures that the loglinelocation.empty() call will be true
 void lineTokenizer::clearLogLineLocation() noexcept {
     loglinelocation.clear();
 }
 
+//print the data in loglinelocation
 void lineTokenizer::printloglinelocation() noexcept {
     cout<<"====loglinelocation=====\n";
     for (auto i : loglinelocation){
@@ -162,6 +164,7 @@ void lineTokenizer::printloglinelocation() noexcept {
     cout<<"========================\n";
 }
 
+//Return the loglinelocation which is the final outcome of this class.
 vector<tuple<char,int,int,char>> lineTokenizer::getToken(){
     return loglinelocation;
 }
