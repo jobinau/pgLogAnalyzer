@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 //End of verification of log_line_prefix.
     
     
-// Show the contents of the loglinelocation
+// OLD Debug code. Can be removed: Show the contents of the loglinelocation
 /*
     cout<<"loglinelocation content :"<<endl;
     for (auto i : loglinelocation){

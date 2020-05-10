@@ -34,7 +34,7 @@ private:
     int curStatementType;
     map<size_t,string> SqlidSqlMap;
 public:
-    //logFileParser();
+
     logFileParser(ifstream & logfile_in, const vector<tuple<char,int,int,char>> & loglinelocation_in);
     //logFileParser(const logFileParser& orig);
     virtual ~logFileParser();
