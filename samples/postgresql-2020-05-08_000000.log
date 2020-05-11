@@ -1,0 +1,549 @@
+2020-05-08 13:53:37.448 IST [1897] postgres@postgres LOG:  duration: 30.199 ms  statement: SELECT n.nspname as "Schema",
+	  c.relname as "Name",
+	  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as "Type",
+	  pg_catalog.pg_get_userbyid(c.relowner) as "Owner"
+	FROM pg_catalog.pg_class c
+	     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+	WHERE c.relkind IN ('r','p','')
+	      AND n.nspname <> 'pg_catalog'
+	      AND n.nspname <> 'information_schema'
+	      AND n.nspname !~ '^pg_toast'
+	  AND pg_catalog.pg_table_is_visible(c.oid)
+	ORDER BY 1,2;
+2020-05-08 13:53:48.883 IST [1897] postgres@postgres ERROR:  type "numberic" does not exist at character 21
+2020-05-08 13:53:48.883 IST [1897] postgres@postgres STATEMENT:  create table t2 (id numberic);
+2020-05-08 13:53:53.312 IST [1897] postgres@postgres LOG:  duration: 41.042 ms  statement: create table t2 (id numeric);
+2020-05-08 17:34:44.600 IST [1897] postgres@postgres ERROR:  syntax error at or near "_p1962" at character 25
+2020-05-08 17:34:44.600 IST [1897] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG _p1962 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01');
+2020-05-08 17:34:51.908 IST [1897] postgres@postgres LOG:  duration: 29.486 ms  statement: CREATE TABLE MTDAUTHLOG_p1962 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01');
+2020-05-08 17:36:42.601 IST [21605] postgres@postgres LOG:  duration: 24.070 ms  statement: SELECT count(*) FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i, pg_stat_user_tables s WHERE c.oid=i.inhrelid AND i.inhparent = '210286' and c.oid = s.relid and s.n_live_tup = 0 
+2020-05-08 17:36:43.619 IST [21605] postgres@postgres LOG:  duration: 20.478 ms  statement: CREATE TABLE public.mtdauthlog_p1969_05 PARTITION OF public.mtdauthlog FOR VALUES FROM ('1969-05-01 00:00:00') TO ('1969-06-01 00:00:00')
+2020-05-08 17:40:09.551 IST [21750] postgres@postgres ERROR:  unrecognized parameter "autovacuum_analyze_scale_factor"
+2020-05-08 17:40:09.551 IST [21750] postgres@postgres STATEMENT:  ALTER TABLE MTDAUTHLOG SET (autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 400000, autovacuum_analyze_threshold = 100000);
+2020-05-08 17:41:54.642 IST [21750] postgres@postgres ERROR:  unrecognized parameter "autovacuum_analyze_scale_factor"
+2020-05-08 17:41:54.642 IST [21750] postgres@postgres STATEMENT:  ALTER TABLE public.mtdauthlog SET (autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 400000, autovacuum_analyze_threshold = 100000);
+2020-05-08 17:51:16.524 IST [21750] postgres@postgres LOG:  duration: 66.673 ms  statement: WITH RECURSIVE inheritance_tree AS (
+	     SELECT   c.oid AS table_oid
+	            , c.relname  AS table_name
+	            , NULL::name AS table_parent_name
+	            , c.relispartition AS is_partition
+	            , true AS is_root
+	     FROM pg_class c
+	     JOIN pg_namespace n ON n.oid = c.relnamespace
+	     WHERE c.relkind = 'p'
+	     AND   c.relispartition = false
+	     UNION ALL
+	     SELECT inh.inhrelid AS table_oid
+	          , c.relname AS table_name
+	          , cc.relname AS table_parent_name
+	          , c.relispartition AS is_partition
+	          , false AS is_root
+	     FROM inheritance_tree it
+	     JOIN pg_inherits inh ON inh.inhparent = it.table_oid
+	     JOIN pg_class c ON inh.inhrelid = c.oid
+	     JOIN pg_class cc ON it.table_oid = cc.oid
+	)
+	SELECT
+	          it.table_name
+	        , is_root
+	        , c.reltuples
+	        , c.relpages
+	        , CASE p.partstrat
+	               WHEN 'l' THEN 'BY LIST'
+	               WHEN 'r' THEN 'BY RANGE'
+	               WHEN 'h' THEN 'BY HASH'
+	               ELSE 'not partitioned'
+	          END AS partitioning_type
+	        , it.table_parent_name
+	        , pg_get_expr( c.relpartbound, c.oid, true ) AS partitioning_values
+	        , pg_get_expr( p.partexprs, c.oid, true )    AS sub_partitioning_values
+	FROM inheritance_tree it
+	JOIN pg_class c ON c.oid = it.table_oid
+	LEFT JOIN pg_partitioned_table p ON p.partrelid = it.table_oid
+	ORDER BY 2 DESC,1,3;
+2020-05-08 17:52:36.044 IST [23837] postgres@postgres LOG:  duration: 139.235 ms  statement: SELECT c.tableoid, c.oid, c.relname, (SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM (SELECT acl, row_n FROM pg_catalog.unnest(coalesce(c.relacl,pg_catalog.acldefault(CASE WHEN c.relkind = 'S' THEN 's' ELSE 'r' END::"char",c.relowner))) WITH ORDINALITY AS perm(acl,row_n) WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(CASE WHEN c.relkind = 'S' THEN 's' ELSE 'r' END::"char",c.relowner))) AS init(init_acl) WHERE acl = init_acl)) as foo) AS relacl, (SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM (SELECT acl, row_n FROM pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault(CASE WHEN c.relkind = 'S' THEN 's' ELSE 'r' END::"char",c.relowner))) WITH ORDINALITY AS initp(acl,row_n) WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.unnest(coalesce(c.relacl,pg_catalog.acldefault(CASE WHEN c.relkind = 'S' THEN 's' ELSE 'r' END::"char",c.relowner))) AS permp(orig_acl) WHERE acl = orig_acl)) as foo) as rrelacl, NULL AS initrelacl, NULL as initrrelacl, c.relkind, c.relnamespace, (SELECT rolname FROM pg_catalog.pg_roles WHERE oid = c.relowner) AS rolname, c.relchecks, c.relhastriggers, c.relhasindex, c.relhasrules, 'f'::bool AS relhasoids, c.relrowsecurity, c.relforcerowsecurity, c.relfrozenxid, c.relminmxid, tc.oid AS toid, tc.relfrozenxid AS tfrozenxid, tc.relminmxid AS tminmxid, c.relpersistence, c.relispopulated, c.relreplident, c.relpages, am.amname, CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, d.refobjid AS owning_tab, d.refobjsubid AS owning_col, (SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded') AS reloptions, CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, tc.reloptions AS toast_reloptions, c.relkind = 'S' AND EXISTS (SELECT 1 FROM pg_depend WHERE classid = 'pg_class'::regclass AND objid = c.oid AND objsubid = 0 AND refclassid = 'pg_class'::regclass AND deptype = 'i') AS is_identity_sequence, EXISTS (SELECT 1 FROM pg_attribute at LEFT JOIN pg_init_privs pip ON (c.oid = pip.objoid AND pip.classoid = 'pg_class'::regclass AND pip.objsubid = at.attnum)WHERE at.attrelid = c.oid AND ((SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM (SELECT acl, row_n FROM pg_catalog.unnest(coalesce(at.attacl,pg_catalog.acldefault('c',c.relowner))) WITH ORDINALITY AS perm(acl,row_n) WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault('c',c.relowner))) AS init(init_acl) WHERE acl = init_acl)) as foo) IS NOT NULL OR (SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM (SELECT acl, row_n FROM pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault('c',c.relowner))) WITH ORDINALITY AS initp(acl,row_n) WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.unnest(coalesce(at.attacl,pg_catalog.acldefault('c',c.relowner))) AS permp(orig_acl) WHERE acl = orig_acl)) as foo) IS NOT NULL OR NULL IS NOT NULL OR NULL IS NOT NULL))AS changed_acl, pg_get_partkeydef(c.oid) AS partkeydef, c.relispartition AS ispartition, pg_get_expr(c.relpartbound, c.oid) AS partbound FROM pg_class c LEFT JOIN pg_depend d ON (c.relkind = 'S' AND d.classid = c.tableoid AND d.objid = c.oid AND d.objsubid = 0 AND d.refclassid = c.tableoid AND d.deptype IN ('a', 'i')) LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid AND c.relkind <> 'p') LEFT JOIN pg_am am ON (c.relam = am.oid) LEFT JOIN pg_init_privs pip ON (c.oid = pip.objoid AND pip.classoid = 'pg_class'::regclass AND pip.objsubid = 0) WHERE c.relkind in ('r', 'S', 'v', 'c', 'm', 'f', 'p') ORDER BY c.oid
+2020-05-08 17:52:36.112 IST [23837] postgres@postgres LOG:  duration: 50.956 ms  statement: SELECT t.tableoid, t.oid, t.typname, t.typnamespace, (SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM (SELECT acl, row_n FROM pg_catalog.unnest(coalesce(t.typacl,pg_catalog.acldefault('T',t.typowner))) WITH ORDINALITY AS perm(acl,row_n) WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault('T',t.typowner))) AS init(init_acl) WHERE acl = init_acl)) as foo) AS typacl, (SELECT pg_catalog.array_agg(acl ORDER BY row_n) FROM (SELECT acl, row_n FROM pg_catalog.unnest(coalesce(pip.initprivs,pg_catalog.acldefault('T',t.typowner))) WITH ORDINALITY AS initp(acl,row_n) WHERE NOT EXISTS ( SELECT 1 FROM pg_catalog.unnest(coalesce(t.typacl,pg_catalog.acldefault('T',t.typowner))) AS permp(orig_acl) WHERE acl = orig_acl)) as foo) AS rtypacl, NULL AS inittypacl, NULL AS initrtypacl, (SELECT rolname FROM pg_catalog.pg_roles WHERE oid = t.typowner) AS rolname, t.typelem, t.typrelid, CASE WHEN t.typrelid = 0 THEN ' '::"char" ELSE (SELECT relkind FROM pg_class WHERE oid = t.typrelid) END AS typrelkind, t.typtype, t.typisdefined, t.typname[0] = '_' AND t.typelem != 0 AND (SELECT typarray FROM pg_type te WHERE oid = t.typelem) = t.oid AS isarray FROM pg_type t LEFT JOIN pg_init_privs pip ON (t.oid = pip.objoid AND pip.classoid = 'pg_type'::regclass AND pip.objsubid = 0) 
+2020-05-08 17:52:36.167 IST [23837] postgres@postgres LOG:  duration: 22.806 ms  statement: SELECT classid, objid, refclassid, refobjid, deptype FROM pg_depend WHERE deptype != 'p' AND deptype != 'e'
+	UNION ALL
+	SELECT 'pg_opfamily'::regclass AS classid, amopfamily AS objid, refclassid, refobjid, deptype FROM pg_depend d, pg_amop o WHERE deptype NOT IN ('p', 'e', 'i') AND classid = 'pg_amop'::regclass AND objid = o.oid AND NOT (refclassid = 'pg_opfamily'::regclass AND amopfamily = refobjid)
+	UNION ALL
+	SELECT 'pg_opfamily'::regclass AS classid, amprocfamily AS objid, refclassid, refobjid, deptype FROM pg_depend d, pg_amproc p WHERE deptype NOT IN ('p', 'e', 'i') AND classid = 'pg_amproc'::regclass AND objid = p.oid AND NOT (refclassid = 'pg_opfamily'::regclass AND amprocfamily = refobjid)
+	ORDER BY 1,2
+2020-05-08 17:52:36.197 IST [23837] postgres@postgres LOG:  duration: 23.133 ms  statement: SELECT description, classoid, objoid, objsubid FROM pg_catalog.pg_description ORDER BY classoid, objoid, objsubid
+2020-05-08 20:29:24.655 IST [7447] postgres@postgres ERROR:  relation "mtdauthlog" already exists
+2020-05-08 20:29:24.655 IST [7447] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG  (
+	         TRADE_ID BIGINT GENERATED BY DEFAULT AS IDENTITY, 
+	         TRADE_TS TIMESTAMP,
+	         COMPANY_ID SMALLINT, 
+	         SHARES INT, 
+	         RATE  NUMERIC(6,2),
+	        SETTLEMENT_ID SMALLINT,
+	       PRIMARY KEY (TRADE_ID , TRADE_TS) 
+	 )
+	PARTITION BY RANGE (TRADE_TS)
+	 ;
+2020-05-08 20:29:31.763 IST [7447] postgres@postgres LOG:  duration: 117.055 ms  statement: drop table MTDAUTHLOG;
+2020-05-08 20:30:01.450 IST [7447] postgres@postgres ERROR:  syntax error at or near "_p1962" at character 25
+2020-05-08 20:30:01.450 IST [7447] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG _p1962 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01')
+	SET (autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 400000, autovacuum_analyze_threshold = 100000);
+2020-05-08 20:30:13.894 IST [7447] postgres@postgres ERROR:  syntax error at or near "SET" at character 105
+2020-05-08 20:30:13.894 IST [7447] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG_p1962 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01')
+	SET (autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 400000, autovacuum_analyze_threshold = 100000);
+2020-05-08 21:05:21.515 IST [7447] postgres@postgres ERROR:  syntax error at or near "generate_series" at character 23
+2020-05-08 21:05:21.515 IST [7447] postgres@postgres STATEMENT:  insert into t1 values generate_series (1,1000000);
+2020-05-08 21:05:33.882 IST [7447] postgres@postgres ERROR:  syntax error at or near "select" at character 23
+2020-05-08 21:05:33.882 IST [7447] postgres@postgres STATEMENT:  insert into t1 values select * from generate_series (1,1000000);
+2020-05-08 21:05:40.253 IST [7447] postgres@postgres ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2020-05-08 21:05:40.253 IST [7447] postgres@postgres STATEMENT:  insert into t1  select * from generate_series (1,1000000);
+2020-05-08 21:05:53.472 IST [11573] postgres@postgres LOG:  duration: 968.219 ms  statement: insert into t1  select * from generate_series (1,1000000);
+2020-05-08 21:06:09.711 IST [11573] postgres@postgres ERROR:  column "id" does not exist at character 18
+2020-05-08 21:06:09.711 IST [11573] postgres@postgres STATEMENT:  update t1 set id=id;
+2020-05-08 21:06:19.318 IST [11573] postgres@postgres ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2020-05-08 21:06:19.318 IST [11573] postgres@postgres STATEMENT:  SELECT c.oid,
+	  n.nspname,
+	  c.relname
+	FROM pg_catalog.pg_class c
+	     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+	WHERE c.relname OPERATOR(pg_catalog.~) '^(t1)$' COLLATE pg_catalog.default
+	  AND pg_catalog.pg_table_is_visible(c.oid)
+	ORDER BY 2, 3;
+2020-05-08 21:07:07.592 IST [11573] postgres@postgres LOG:  duration: 847.188 ms  statement: insert into t1  select * from generate_series (1,1000000);
+2020-05-08 21:07:30.008 IST [11573] postgres@postgres LOG:  duration: 1605.723 ms  statement: update t1 set name=name;
+2020-05-08 21:07:50.901 IST [11481] postgres@postgres LOG:  duration: 70.326 ms  statement: select count(*) from t1;
+2020-05-08 22:32:10.702 IST [11481] postgres@postgres LOG:  duration: 25.526 ms  statement: SELECT n.nspname as "Schema",
+	  c.relname as "Name",
+	  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as "Type",
+	  pg_catalog.pg_get_userbyid(c.relowner) as "Owner",
+	  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as "Size",
+	  pg_catalog.obj_description(c.oid, 'pg_class') as "Description"
+	FROM pg_catalog.pg_class c
+	     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+	WHERE c.relkind IN ('r','p','s','')
+	      AND n.nspname !~ '^pg_toast'
+	  AND c.relname OPERATOR(pg_catalog.~) '^(t1)$' COLLATE pg_catalog.default
+	  AND pg_catalog.pg_table_is_visible(c.oid)
+	ORDER BY 1,2;
+2020-05-08 22:32:32.294 IST [11573] postgres@postgres LOG:  duration: 908.022 ms  statement: insert into t1  select * from generate_series (1,1000000);
+2020-05-08 22:32:56.891 IST [11481] postgres@postgres LOG:  duration: 358.944 ms  statement: SELECT current_database(), schemaname, tblname, bs*tblpages AS real_size,
+	  (tblpages-est_tblpages)*bs AS extra_size,
+	  CASE WHEN tblpages - est_tblpages > 0
+	    THEN 100 * (tblpages - est_tblpages)/tblpages::float
+	    ELSE 0
+	  END AS extra_ratio, fillfactor,
+	  CASE WHEN tblpages - est_tblpages_ff > 0
+	    THEN (tblpages-est_tblpages_ff)*bs
+	    ELSE 0
+	  END AS bloat_size,
+	  CASE WHEN tblpages - est_tblpages_ff > 0
+	    THEN 100 * (tblpages - est_tblpages_ff)/tblpages::float
+	    ELSE 0
+	  END AS bloat_ratio, is_na
+	  
+	FROM (
+	  SELECT ceil( reltuples / ( (bs-page_hdr)/tpl_size ) ) + ceil( toasttuples / 4 ) AS est_tblpages,
+	    ceil( reltuples / ( (bs-page_hdr)*fillfactor/(tpl_size*100) ) ) + ceil( toasttuples / 4 ) AS est_tblpages_ff,
+	    tblpages, fillfactor, bs, tblid, schemaname, tblname, heappages, toastpages, is_na
+	    
+	  FROM (
+	    SELECT
+	      ( 4 + tpl_hdr_size + tpl_data_size + (2*ma)
+	        - CASE WHEN tpl_hdr_size%ma = 0 THEN ma ELSE tpl_hdr_size%ma END
+	        - CASE WHEN ceil(tpl_data_size)::int%ma = 0 THEN ma ELSE ceil(tpl_data_size)::int%ma END
+	      ) AS tpl_size, bs - page_hdr AS size_per_block, (heappages + toastpages) AS tblpages, heappages,
+	      toastpages, reltuples, toasttuples, bs, page_hdr, tblid, schemaname, tblname, fillfactor, is_na
+	      
+	    FROM (
+	      SELECT
+	        tbl.oid AS tblid, ns.nspname AS schemaname, tbl.relname AS tblname, tbl.reltuples,
+	        tbl.relpages AS heappages, coalesce(toast.relpages, 0) AS toastpages,
+	        coalesce(toast.reltuples, 0) AS toasttuples,
+	        coalesce(substring(
+	          array_to_string(tbl.reloptions, ' ')
+	          FROM 'fillfactor=([0-9]+)')::smallint, 100) AS fillfactor,
+	        current_setting('block_size')::numeric AS bs,
+	        CASE WHEN version()~'mingw32' OR version()~'64-bit|x86_64|ppc64|ia64|amd64' THEN 8 ELSE 4 END AS ma,
+	        24 AS page_hdr,
+	        23 + CASE WHEN MAX(coalesce(s.null_frac,0)) > 0 THEN ( 7 + count(s.attname) ) / 8 ELSE 0::int END
+	           + CASE WHEN bool_or(att.attname = 'oid' and att.attnum < 0) THEN 4 ELSE 0 END AS tpl_hdr_size,
+	        sum( (1-coalesce(s.null_frac, 0)) * coalesce(s.avg_width, 0) ) AS tpl_data_size,
+	        bool_or(att.atttypid = 'pg_catalog.name'::regtype)
+	          OR sum(CASE WHEN att.attnum > 0 THEN 1 ELSE 0 END) <> count(s.attname) AS is_na
+	      FROM pg_attribute AS att
+	        JOIN pg_class AS tbl ON att.attrelid = tbl.oid
+	        JOIN pg_namespace AS ns ON ns.oid = tbl.relnamespace
+	        LEFT JOIN pg_stats AS s ON s.schemaname=ns.nspname
+	          AND s.tablename = tbl.relname AND s.inherited=false AND s.attname=att.attname
+	        LEFT JOIN pg_class AS toast ON tbl.reltoastrelid = toast.oid
+	      WHERE NOT att.attisdropped
+	        AND tbl.relkind in ('r','m')
+	      GROUP BY 1,2,3,4,5,6,7,8,9,10
+	      ORDER BY 2,3
+	    ) AS s
+	  ) AS s2
+	) AS s3
+	
+	
+	ORDER BY schemaname, tblname;
+2020-05-08 22:33:29.307 IST [11573] postgres@postgres LOG:  duration: 1520.671 ms  statement: update t1 set name=name;
+2020-05-08 22:33:39.702 IST [11481] postgres@postgres LOG:  duration: 123.805 ms  statement: SELECT current_database(), schemaname, tblname, bs*tblpages AS real_size,
+	  (tblpages-est_tblpages)*bs AS extra_size,
+	  CASE WHEN tblpages - est_tblpages > 0
+	    THEN 100 * (tblpages - est_tblpages)/tblpages::float
+	    ELSE 0
+	  END AS extra_ratio, fillfactor,
+	  CASE WHEN tblpages - est_tblpages_ff > 0
+	    THEN (tblpages-est_tblpages_ff)*bs
+	    ELSE 0
+	  END AS bloat_size,
+	  CASE WHEN tblpages - est_tblpages_ff > 0
+	    THEN 100 * (tblpages - est_tblpages_ff)/tblpages::float
+	    ELSE 0
+	  END AS bloat_ratio, is_na
+	  
+	FROM (
+	  SELECT ceil( reltuples / ( (bs-page_hdr)/tpl_size ) ) + ceil( toasttuples / 4 ) AS est_tblpages,
+	    ceil( reltuples / ( (bs-page_hdr)*fillfactor/(tpl_size*100) ) ) + ceil( toasttuples / 4 ) AS est_tblpages_ff,
+	    tblpages, fillfactor, bs, tblid, schemaname, tblname, heappages, toastpages, is_na
+	    
+	  FROM (
+	    SELECT
+	      ( 4 + tpl_hdr_size + tpl_data_size + (2*ma)
+	        - CASE WHEN tpl_hdr_size%ma = 0 THEN ma ELSE tpl_hdr_size%ma END
+	        - CASE WHEN ceil(tpl_data_size)::int%ma = 0 THEN ma ELSE ceil(tpl_data_size)::int%ma END
+	      ) AS tpl_size, bs - page_hdr AS size_per_block, (heappages + toastpages) AS tblpages, heappages,
+	      toastpages, reltuples, toasttuples, bs, page_hdr, tblid, schemaname, tblname, fillfactor, is_na
+	      
+	    FROM (
+	      SELECT
+	        tbl.oid AS tblid, ns.nspname AS schemaname, tbl.relname AS tblname, tbl.reltuples,
+	        tbl.relpages AS heappages, coalesce(toast.relpages, 0) AS toastpages,
+	        coalesce(toast.reltuples, 0) AS toasttuples,
+	        coalesce(substring(
+	          array_to_string(tbl.reloptions, ' ')
+	          FROM 'fillfactor=([0-9]+)')::smallint, 100) AS fillfactor,
+	        current_setting('block_size')::numeric AS bs,
+	        CASE WHEN version()~'mingw32' OR version()~'64-bit|x86_64|ppc64|ia64|amd64' THEN 8 ELSE 4 END AS ma,
+	        24 AS page_hdr,
+	        23 + CASE WHEN MAX(coalesce(s.null_frac,0)) > 0 THEN ( 7 + count(s.attname) ) / 8 ELSE 0::int END
+	           + CASE WHEN bool_or(att.attname = 'oid' and att.attnum < 0) THEN 4 ELSE 0 END AS tpl_hdr_size,
+	        sum( (1-coalesce(s.null_frac, 0)) * coalesce(s.avg_width, 0) ) AS tpl_data_size,
+	        bool_or(att.atttypid = 'pg_catalog.name'::regtype)
+	          OR sum(CASE WHEN att.attnum > 0 THEN 1 ELSE 0 END) <> count(s.attname) AS is_na
+	      FROM pg_attribute AS att
+	        JOIN pg_class AS tbl ON att.attrelid = tbl.oid
+	        JOIN pg_namespace AS ns ON ns.oid = tbl.relnamespace
+	        LEFT JOIN pg_stats AS s ON s.schemaname=ns.nspname
+	          AND s.tablename = tbl.relname AND s.inherited=false AND s.attname=att.attname
+	        LEFT JOIN pg_class AS toast ON tbl.reltoastrelid = toast.oid
+	      WHERE NOT att.attisdropped
+	        AND tbl.relkind in ('r','m')
+	      GROUP BY 1,2,3,4,5,6,7,8,9,10
+	      ORDER BY 2,3
+	    ) AS s
+	  ) AS s2
+	) AS s3
+	
+	
+	ORDER BY schemaname, tblname;
+2020-05-08 22:36:00.135 IST [11481] postgres@postgres LOG:  duration: 13369.379 ms  statement: WITH constants AS (
+	    
+	    
+	    SELECT current_setting('block_size')::numeric AS bs, 23 AS hdr, 8 AS ma
+	),
+	no_stats AS (
+	    
+	    
+	    SELECT table_schema, table_name, 
+	        n_live_tup::numeric as est_rows,
+	        pg_table_size(relid)::numeric as table_size
+	    FROM information_schema.columns
+	        JOIN pg_stat_user_tables as psut
+	           ON table_schema = psut.schemaname
+	           AND table_name = psut.relname
+	        LEFT OUTER JOIN pg_stats
+	        ON table_schema = pg_stats.schemaname
+	            AND table_name = pg_stats.tablename
+	            AND column_name = attname 
+	    WHERE attname IS NULL
+	        AND table_schema NOT IN ('pg_catalog', 'information_schema')
+	    GROUP BY table_schema, table_name, relid, n_live_tup
+	),
+	null_headers AS (
+	    
+	    
+	    
+	    SELECT
+	        hdr+1+(sum(case when null_frac <> 0 THEN 1 else 0 END)/8) as nullhdr,
+	        SUM((1-null_frac)*avg_width) as datawidth,
+	        MAX(null_frac) as maxfracsum,
+	        schemaname,
+	        tablename,
+	        hdr, ma, bs
+	    FROM pg_stats CROSS JOIN constants
+	        LEFT OUTER JOIN no_stats
+	            ON schemaname = no_stats.table_schema
+	            AND tablename = no_stats.table_name
+	    WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+	        AND no_stats.table_name IS NULL
+	        AND EXISTS ( SELECT 1
+	            FROM information_schema.columns
+	                WHERE schemaname = columns.table_schema
+	                    AND tablename = columns.table_name )
+	    GROUP BY schemaname, tablename, hdr, ma, bs
+	),
+	data_headers AS (
+	    
+	    SELECT
+	        ma, bs, hdr, schemaname, tablename,
+	        (datawidth+(hdr+ma-(case when hdr%ma=0 THEN ma ELSE hdr%ma END)))::numeric AS datahdr,
+	        (maxfracsum*(nullhdr+ma-(case when nullhdr%ma=0 THEN ma ELSE nullhdr%ma END))) AS nullhdr2
+	    FROM null_headers
+	),
+	table_estimates AS (
+	    
+	    
+	    SELECT schemaname, tablename, bs,
+	        reltuples::numeric as est_rows, relpages * bs as table_bytes,
+	    CEIL((reltuples*
+	            (datahdr + nullhdr2 + 4 + ma -
+	                (CASE WHEN datahdr%ma=0
+	                    THEN ma ELSE datahdr%ma END)
+	                )/(bs-20))) * bs AS expected_bytes,
+	        reltoastrelid
+	    FROM data_headers
+	        JOIN pg_class ON tablename = relname
+	        JOIN pg_namespace ON relnamespace = pg_namespace.oid
+	            AND schemaname = nspname
+	    WHERE pg_class.relkind = 'r'
+	),
+	estimates_with_toast AS (
+	    
+	    
+	    
+	    SELECT schemaname, tablename, 
+	        TRUE as can_estimate,
+	        est_rows,
+	        table_bytes + ( coalesce(toast.relpages, 0) * bs ) as table_bytes,
+	        expected_bytes + ( ceil( coalesce(toast.reltuples, 0) / 4 ) * bs ) as expected_bytes
+	    FROM table_estimates LEFT OUTER JOIN pg_class as toast
+	        ON table_estimates.reltoastrelid = toast.oid
+	            AND toast.relkind = 't'
+	),
+	table_estimates_plus AS (
+	
+	
+	
+	
+	    SELECT current_database() as databasename,
+	            schemaname, tablename, can_estimate, 
+	            est_rows,
+	            CASE WHEN table_bytes > 0
+	                THEN table_bytes::NUMERIC
+	                ELSE NULL::NUMERIC END
+	                AS table_bytes,
+	            CASE WHEN expected_bytes > 0 
+	                THEN expected_bytes::NUMERIC
+	                ELSE NULL::NUMERIC END
+	                    AS expected_bytes,
+	            CASE WHEN expected_bytes > 0 AND table_bytes > 0
+	                AND expected_bytes <= table_bytes
+	                THEN (table_bytes - expected_bytes)::NUMERIC
+	                ELSE 0::NUMERIC END AS bloat_bytes
+	    FROM estimates_with_toast
+	    UNION ALL
+	    SELECT current_database() as databasename, 
+	        table_schema, table_name, FALSE, 
+	        est_rows, table_size,
+	        NULL::NUMERIC, NULL::NUMERIC
+	    FROM no_stats
+	),
+	bloat_data AS (
+	    
+	    select current_database() as databasename,
+	        schemaname, tablename, can_estimate, 
+	        table_bytes, round(table_bytes/(1024^2)::NUMERIC,3) as table_mb,
+	        expected_bytes, round(expected_bytes/(1024^2)::NUMERIC,3) as expected_mb,
+	        round(bloat_bytes*100/table_bytes) as pct_bloat,
+	        round(bloat_bytes/(1024::NUMERIC^2),2) as mb_bloat,
+	        table_bytes, expected_bytes, est_rows
+	    FROM table_estimates_plus
+	)
+	
+	SELECT databasename, schemaname, tablename,
+	    can_estimate,
+	    est_rows,
+	    pct_bloat, mb_bloat,
+	    table_mb
+	FROM bloat_data
+	
+	
+	
+	
+	
+	WHERE tablename in ('mtdauthlog','mtdresponsedata')
+	ORDER BY pct_bloat DESC;
+2020-05-08 22:36:49.172 IST [11481] postgres@postgres LOG:  duration: 12602.278 ms  statement: WITH constants AS (
+	    
+	    
+	    SELECT current_setting('block_size')::numeric AS bs, 23 AS hdr, 8 AS ma
+	),
+	no_stats AS (
+	    
+	    
+	    SELECT table_schema, table_name, 
+	        n_live_tup::numeric as est_rows,
+	        pg_table_size(relid)::numeric as table_size
+	    FROM information_schema.columns
+	        JOIN pg_stat_user_tables as psut
+	           ON table_schema = psut.schemaname
+	           AND table_name = psut.relname
+	        LEFT OUTER JOIN pg_stats
+	        ON table_schema = pg_stats.schemaname
+	            AND table_name = pg_stats.tablename
+	            AND column_name = attname 
+	    WHERE attname IS NULL
+	        AND table_schema NOT IN ('pg_catalog', 'information_schema')
+	    GROUP BY table_schema, table_name, relid, n_live_tup
+	),
+	null_headers AS (
+	    
+	    
+	    
+	    SELECT
+	        hdr+1+(sum(case when null_frac <> 0 THEN 1 else 0 END)/8) as nullhdr,
+	        SUM((1-null_frac)*avg_width) as datawidth,
+	        MAX(null_frac) as maxfracsum,
+	        schemaname,
+	        tablename,
+	        hdr, ma, bs
+	    FROM pg_stats CROSS JOIN constants
+	        LEFT OUTER JOIN no_stats
+	            ON schemaname = no_stats.table_schema
+	            AND tablename = no_stats.table_name
+	    WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+	        AND no_stats.table_name IS NULL
+	        AND EXISTS ( SELECT 1
+	            FROM information_schema.columns
+	                WHERE schemaname = columns.table_schema
+	                    AND tablename = columns.table_name )
+	    GROUP BY schemaname, tablename, hdr, ma, bs
+	),
+	data_headers AS (
+	    
+	    SELECT
+	        ma, bs, hdr, schemaname, tablename,
+	        (datawidth+(hdr+ma-(case when hdr%ma=0 THEN ma ELSE hdr%ma END)))::numeric AS datahdr,
+	        (maxfracsum*(nullhdr+ma-(case when nullhdr%ma=0 THEN ma ELSE nullhdr%ma END))) AS nullhdr2
+	    FROM null_headers
+	),
+	table_estimates AS (
+	    
+	    
+	    SELECT schemaname, tablename, bs,
+	        reltuples::numeric as est_rows, relpages * bs as table_bytes,
+	    CEIL((reltuples*
+	            (datahdr + nullhdr2 + 4 + ma -
+	                (CASE WHEN datahdr%ma=0
+	                    THEN ma ELSE datahdr%ma END)
+	                )/(bs-20))) * bs AS expected_bytes,
+	        reltoastrelid
+	    FROM data_headers
+	        JOIN pg_class ON tablename = relname
+	        JOIN pg_namespace ON relnamespace = pg_namespace.oid
+	            AND schemaname = nspname
+	    WHERE pg_class.relkind = 'r'
+	),
+	estimates_with_toast AS (
+	    
+	    
+	    
+	    SELECT schemaname, tablename, 
+	        TRUE as can_estimate,
+	        est_rows,
+	        table_bytes + ( coalesce(toast.relpages, 0) * bs ) as table_bytes,
+	        expected_bytes + ( ceil( coalesce(toast.reltuples, 0) / 4 ) * bs ) as expected_bytes
+	    FROM table_estimates LEFT OUTER JOIN pg_class as toast
+	        ON table_estimates.reltoastrelid = toast.oid
+	            AND toast.relkind = 't'
+	),
+	table_estimates_plus AS (
+	
+	
+	
+	
+	    SELECT current_database() as databasename,
+	            schemaname, tablename, can_estimate, 
+	            est_rows,
+	            CASE WHEN table_bytes > 0
+	                THEN table_bytes::NUMERIC
+	                ELSE NULL::NUMERIC END
+	                AS table_bytes,
+	            CASE WHEN expected_bytes > 0 
+	                THEN expected_bytes::NUMERIC
+	                ELSE NULL::NUMERIC END
+	                    AS expected_bytes,
+	            CASE WHEN expected_bytes > 0 AND table_bytes > 0
+	                AND expected_bytes <= table_bytes
+	                THEN (table_bytes - expected_bytes)::NUMERIC
+	                ELSE 0::NUMERIC END AS bloat_bytes
+	    FROM estimates_with_toast
+	    UNION ALL
+	    SELECT current_database() as databasename, 
+	        table_schema, table_name, FALSE, 
+	        est_rows, table_size,
+	        NULL::NUMERIC, NULL::NUMERIC
+	    FROM no_stats
+	),
+	bloat_data AS (
+	    
+	    select current_database() as databasename,
+	        schemaname, tablename, can_estimate, 
+	        table_bytes, round(table_bytes/(1024^2)::NUMERIC,3) as table_mb,
+	        expected_bytes, round(expected_bytes/(1024^2)::NUMERIC,3) as expected_mb,
+	        round(bloat_bytes*100/table_bytes) as pct_bloat,
+	        round(bloat_bytes/(1024::NUMERIC^2),2) as mb_bloat,
+	        table_bytes, expected_bytes, est_rows
+	    FROM table_estimates_plus
+	)
+	
+	SELECT databasename, schemaname, tablename,
+	    can_estimate,
+	    est_rows,
+	    pct_bloat, mb_bloat,
+	    table_mb
+	FROM bloat_data
+	
+	
+	
+	
+	
+	WHERE tablename in ('mtdauthlog_p1962')
+	ORDER BY pct_bloat DESC;
+2020-05-08 22:43:55.259 IST [11481] postgres@postgres ERROR:  unrecognized parameter "vacuum_freeze_min_age"
+2020-05-08 22:43:55.259 IST [11481] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG_1 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01')
+	WITH  (vacuum_freeze_min_age = 0, autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 31000000, autovacuum_analyze_threshold = 31000000);
+2020-05-08 22:45:38.237 IST [11481] postgres@postgres ERROR:  unrecognized parameter "vacuum_freeze_min_age"
+2020-05-08 22:45:38.237 IST [11481] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG  (
+	         TRADE_ID BIGINT GENERATED BY DEFAULT AS IDENTITY, 
+	         TRADE_TS TIMESTAMP,
+	         COMPANY_ID SMALLINT, 
+	         SHARES INT, 
+	         RATE  NUMERIC(6,2),
+	        SETTLEMENT_ID SMALLINT,
+	       PRIMARY KEY (TRADE_ID , TRADE_TS) 
+	 )
+	PARTITION BY RANGE (TRADE_TS)
+	WITH (vacuum_freeze_min_age = 0)
+	 ;
+2020-05-08 22:46:52.990 IST [11481] postgres@postgres ERROR:  relation "partitionname" does not exist
+2020-05-08 22:46:52.990 IST [11481] postgres@postgres STATEMENT:  ALTER TABLE partitionname SET (vacuum_freeze_min_age = 0, autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 31000000, autovacuum_analyze_threshold = 31000000);
+2020-05-08 22:47:09.145 IST [11481] postgres@postgres ERROR:  relation "mtdauthlog_1" does not exist
+2020-05-08 22:47:09.145 IST [11481] postgres@postgres STATEMENT:  ALTER TABLE MTDAUTHLOG_1 SET (vacuum_freeze_min_age = 0, autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 31000000, autovacuum_analyze_threshold = 31000000);
+2020-05-08 22:47:20.544 IST [11481] postgres@postgres ERROR:  relation "mtdauthlog" does not exist
+2020-05-08 22:47:20.544 IST [11481] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG_1 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01')
+	WITH  (vacuum_freeze_min_age = 0, autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 31000000, autovacuum_analyze_threshold = 31000000);
+2020-05-08 22:47:49.247 IST [11481] postgres@postgres ERROR:  unrecognized parameter "vacuum_freeze_min_age"
+2020-05-08 22:47:49.247 IST [11481] postgres@postgres STATEMENT:  CREATE TABLE MTDAUTHLOG_1 PARTITION OF MTDAUTHLOG  FOR VALUES FROM ('1962-01-01') TO ('1963-01-01')
+	WITH  (vacuum_freeze_min_age = 0, autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 31000000, autovacuum_analyze_threshold = 31000000);
+2020-05-08 22:48:15.369 IST [11481] postgres@postgres ERROR:  unrecognized parameter "vacuum_freeze_min_age"
+2020-05-08 22:48:15.369 IST [11481] postgres@postgres STATEMENT:  ALTER TABLE MTDAUTHLOG_1 SET (vacuum_freeze_min_age = 0, autovacuum_analyze_scale_factor = 0, autovacuum_vacuum_scale_factor = 0, autovacuum_vacuum_threshold = 31000000, autovacuum_analyze_threshold = 31000000);

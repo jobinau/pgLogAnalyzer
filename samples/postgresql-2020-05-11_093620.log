@@ -1,0 +1,9 @@
+2020-05-11 09:36:20.431 IST [10853] LOG:  database system was shut down at 2020-05-11 09:36:20 IST
+2020-05-11 09:36:20.455 IST [10851] LOG:  database system is ready to accept connections
+2020-05-11 09:36:32.058 IST [10871] postgres@postgres LOG:  duration: 286.832 ms  statement: drop table if exists pgbench_accounts, pgbench_branches, pgbench_history, pgbench_tellers
+2020-05-11 09:36:32.149 IST [10871] postgres@postgres LOG:  duration: 90.687 ms  statement: create table pgbench_history(tid int,bid int,aid    int,delta int,mtime timestamp,filler char(22))
+2020-05-11 09:36:33.413 IST [10871] postgres@postgres LOG:  duration: 1231.980 ms  statement: copy pgbench_accounts from stdin
+2020-05-11 09:36:33.517 IST [10871] postgres@postgres LOG:  duration: 83.469 ms  statement: vacuum analyze pgbench_branches
+2020-05-11 09:36:33.776 IST [10871] postgres@postgres LOG:  duration: 251.171 ms  statement: vacuum analyze pgbench_accounts
+2020-05-11 09:36:33.833 IST [10871] postgres@postgres LOG:  duration: 54.315 ms  statement: alter table pgbench_branches add primary key (bid)
+2020-05-11 09:36:34.213 IST [10871] postgres@postgres LOG:  duration: 369.365 ms  statement: alter table pgbench_accounts add primary key (aid)

@@ -210,6 +210,7 @@ bool logFileParser::parse(){
     return true;
 }
 
+//Handle SQL statements
 void logFileParser::StatementHandler(string & logline,size_t & curpos,size_t & endoffset){
     endoffset = logline.find(':',curpos);
     //line for debugging

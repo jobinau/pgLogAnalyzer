@@ -12,8 +12,7 @@ int main(int argc, char* argv[]) {
 
     cout<<"Look for unhanlded '%' symbols and 'Match Failed' messages\n";
     
-    //Test Case 1:
-    
+    cout<<"=========Test Case 1=============\n";
     lineFormat="%m [%p] %q%u@%d";
     tokenizer.genExprStr(lineFormat);
     tokenizer.clearLogLineLocation();
@@ -23,7 +22,7 @@ int main(int argc, char* argv[]) {
         cout<<"Match failed\n";
     }
     
-    //Test Case 2:
+    cout<<"=========Test Case 2=============\n";
     lineFormat="%t %s %d %r %i";
     tokenizer.genExprStr(lineFormat);
     tokenizer.clearLogLineLocation();
@@ -32,5 +31,16 @@ int main(int argc, char* argv[]) {
     }else{
         cout<<"Match failed\n";
     }
+
+    cout<<"=========Test Case 3=============\n";
+    lineFormat="%m [%p] ";
+    tokenizer.genExprStr(lineFormat);
+    tokenizer.clearLogLineLocation();
+    if (tokenizer.prepareLogLineLocation("2020-05-11 10:24:31.731 IST [13931] LOG:  duration: 1178.177 ms  statement: copy pgbench_accounts from stdin")){
+        tokenizer.printloglinelocation();
+    }else{
+        cout<<"Match failed\n";
+    }
+
     //TODO : Add more test cases for unit testing
 }

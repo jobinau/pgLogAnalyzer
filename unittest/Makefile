@@ -3,7 +3,7 @@ CC = g++
 ##Platform specific build is possible by passing CFLAGS : make CFLAGS="-std=c++11 -O3 -march=native"
 CFLAGS = -std=c++11 -g -Wall
 ##Full build includes multiple exes
-fullbuild : UTLineTokenizer
+fullbuild : UTLineTokenizer UTParser
 
 ##How to build UTLineTokenizer
 ##For linking against lineTokenizer.o of the parent directory, modify next 2 lines to have ../lineTokenizer.o
@@ -15,6 +15,14 @@ UTLineTokenizer.o : UTLineTokenizer.cpp
 	$(CC) $(CFLAGS) -c UTLineTokenizer.cpp
 lineTokenizer.o : ../lineTokenizer.cpp ../lineTokenizer.h
 	$(CC) $(CFLAGS) -c ../lineTokenizer.cpp
+##Build Steps for UTParser. But link against Helper.o in the parent directory
+UTParser : UTParser.o logFileParser.o
+	$(CC) $(CFLAGS) UTParser.o logFileParser.o ../Helper.o -o UTParser
+UTParser.o : UTParser.cpp
+	$(CC) $(CFLAGS) -c UTParser.cpp
+logFileParser.o : ../logFileParser.cpp  ../logFileParser.h
+	$(CC) $(CFLAGS) -c ../logFileParser.cpp ../logFileParser.h
+
 ##Clean up the build
 clean :
-	rm *.o UTLineTokenizer
+	rm *.o UTLineTokenizer UTParser
