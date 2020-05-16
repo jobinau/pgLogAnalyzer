@@ -32,7 +32,7 @@ bool logFileParser::parse(){
     int totLines = 0;
     int totErrorLines = 0;
     int unixTime = 0;
-    size_t curpos = 0;     //current position in the logline
+    size_t curpos = 0;     //current position in a particular  line
     size_t endoffset;
     size_t linelength = 0;
     string logline;
@@ -53,8 +53,10 @@ bool logFileParser::parse(){
             //cout<<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<"),";
             curpos = curpos + get<2>(i);
             switch(get<0>(i)){
-                case 't': {
-                    
+
+                //Boh m with millisecods and t without milli seconds are handled similar way
+                case 'm':
+                case 't': 
                     //Check whether initial part of line can be treated as timestamp                   
                     if(strptime(logline.substr(curpos,19).c_str(), "%Y-%m-%d %H:%M:%S", &tm)== nullptr){
                         totErrorLines++;
@@ -64,15 +66,15 @@ bool logFileParser::parse(){
                     unixTime = mktime(&tm);
                     cout<<"TS : "<<unixTime;
                     curpos = curpos + 22;
+                    //if it there is milliseconds, additional 4 positions (including the point) are to be incremented.
+                    if (get<0>(i) == 'm') curpos = curpos + 4;
                     break;
-                }
-                case 'p' : {
+                case 'p' : 
                     endoffset =  logline.find(get<3>(i),curpos)-curpos;
                     //cout << " end : " << endoffset ;
                     cout<<" Proc: " << logline.substr(curpos,endoffset);
                     curpos = curpos + endoffset - 1;
                     break;
-                } 
                 case 'l' :{
                     endoffset =  logline.find(get<3>(i),curpos)-curpos;
                     //cout << " end : " << endoffset ;
