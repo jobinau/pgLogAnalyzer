@@ -111,7 +111,7 @@ bool lineTokenizer::prepareLogLineLocation(const string & logline){
         }
         //get<3>(loglinelocation[order-1]) = matches.suffix().str()[0];
         //Temporary workaround for Clang issue with regex.
-        get<3>(loglinelocation[order-1]) = ' ';
+        //get<3>(loglinelocation[order-1]) = ' ';
         //cout<<" Remaining string : "<<matches.suffix().str()[0]<<endl;
     }
     //cout<<"Size of the string is :"<<cnt++<<endl;

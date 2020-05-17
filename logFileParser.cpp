@@ -32,7 +32,8 @@ bool logFileParser::parse(){
     int totLines = 0;
     int totErrorLines = 0;
     int unixTime = 0;
-    size_t curpos = 0;     //current position in a particular  line
+    size_t curpos = 0;    //current position in a particular  line
+    char PreviousPatternChar = ' ';     //Past pattern character for backward reference
     size_t endoffset;
     size_t linelength = 0;
     string logline;
@@ -51,7 +52,9 @@ bool logFileParser::parse(){
         linelength = logline.length();
         for (auto i : loglinelocation){
             //cout<<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<"),";
-            curpos = curpos + get<2>(i);
+            //if the previous pattern was 'q', the curpos need not forward
+            if(PreviousPatternChar != 'q') 
+                curpos = curpos + get<2>(i);
             switch(get<0>(i)){
 
                 //Boh m with millisecods and t without milli seconds are handled similar way
@@ -62,7 +65,7 @@ bool logFileParser::parse(){
                         totErrorLines++;
                         goto nextline;
                     }
-                    
+                    //Unix timestamp is generated using mktime. verified.
                     unixTime = mktime(&tm);
                     cout<<"TS : "<<unixTime;
                     curpos = curpos + 22;
@@ -113,12 +116,15 @@ bool logFileParser::parse(){
                     curpos = curpos + endoffset - 1;
                     break;
                 }
-            }
+            } 
+            //Store the Previous Patter Char for next loop.
+            PreviousPatternChar = get<0>(i);
         }
         //after the prefix part of the line, LOG:
         curpos = curpos+ 2;
         LOGpart:;
-        //cout<<"Log Line :"<< logline << '\n';
+        //If there is whitespace at the end of the prefix, just advance
+        while(logline[curpos]==' ') curpos++;
         switch (logline[curpos]){
             case 'L' :{   //LOG:
                 if (flushPending) { doFlush();}
@@ -414,14 +420,14 @@ void logFileParser::storeSqlidSqlmap(std::string& sql) noexcept{
 }
 
 void logFileParser::printSqlidSqlmap() noexcept{
-    cout<<"Number of Elements are"<<SqlidSqlMap.size()<<endl;
+    cout<<" Number of Elements are"<<SqlidSqlMap.size()<<endl;
     for (auto& kv : SqlidSqlMap) {
         cout<<kv.first<<"--->"<<kv.second<<endl;
     }
 }
 
 void logFileParser::doFlush(){
-    cout<<"Last Statement is :"<<curStatement<<endl;
+    cout<<" Last Statement is :"<<curStatement<<endl;
     storeSqlidSqlmap(curStatement);
     flushPending = false;
 }
