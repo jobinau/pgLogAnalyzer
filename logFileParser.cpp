@@ -69,10 +69,14 @@ bool logFileParser::parse(){
                     //if it there is milliseconds, additional 4 positions (including the point) are to be incremented.
                     if (get<0>(i) == 'm') curpos = curpos + 4;
                     break;
+                case 'q' : //Abrupt end of log_line_prefix for non sessions
+                    if (logline.substr(curpos,3) == "LOG")
+                        goto LOGpart;
+                    break;
                 case 'p' : 
                     endoffset =  logline.find(get<3>(i),curpos)-curpos;
                     //cout << " end : " << endoffset ;
-                    cout<<" Proc: " << logline.substr(curpos,endoffset);
+                    cout<<" PID: " << logline.substr(curpos,endoffset);
                     curpos = curpos + endoffset - 1;
                     break;
                 case 'l' :{
@@ -82,13 +86,12 @@ bool logFileParser::parse(){
                     curpos = curpos + endoffset - 1;
                     break;
                 }
-                case 'u' : {
+                case 'u' :
                     endoffset =  logline.find(get<3>(i),curpos)-curpos;
                     //cout << " end : " << endoffset ;
-                    cout<<" User : " << logline.substr(curpos,endoffset);
+                    cout<<" USER : " << logline.substr(curpos,endoffset);
                     curpos = curpos + endoffset - 1;
                     break;
-                }
                 case 'a' : {
                     endoffset =  logline.find(get<3>(i),curpos)-curpos;
                     //cout << " end : " << endoffset ;
@@ -112,12 +115,13 @@ bool logFileParser::parse(){
                 }
             }
         }
-        //after the prefix part of the logline,
+        //after the prefix part of the line, LOG:
         curpos = curpos+ 2;
+        LOGpart:;
+        //cout<<"Log Line :"<< logline << '\n';
         switch (logline[curpos]){
             case 'L' :{   //LOG:
-                if (flushPending) { doFlush();
-}
+                if (flushPending) { doFlush();}
                 curpos = logline.find(':',curpos);
                 curpos++;
                 while(curpos < linelength){
@@ -138,6 +142,8 @@ bool logFileParser::parse(){
                                     locateNextChar(logline,curpos,endoffset);
                                     //cout<<"Remaining : "<<logline.substr(curpos)<<endl;
                                     goto whilecontinue;
+                                } else {
+                                    goto UnkownLOGentry;
                                 }
                                 break;
                             }
@@ -148,21 +154,26 @@ bool logFileParser::parse(){
                                 }
                                 break;
                             }
-                            case 'c' :{
+                            case 'c' :
                                 if ( logline.compare(curpos,19,"checkpoint complete") == 0){
                                     //cout<<"Checkpoint:";
                                     curpos = curpos + 19;
                                     getCheckpointDtls(logline,curpos,endoffset);
                                 }
-                            }
+                                break;
+                            default :
+                                UnkownLOGentry:;
+                                cout<<" UnkownLOGentry :"<< logline.substr(curpos);
+                                goto LOGEnd;
+
                         }
                         //break;
                     }
                     curpos++;
                     whilecontinue:;
                 }
-                //cout <<endl<<"SQL :" << logline.substr(curpos);
-                //cout <<" HASH : "<< hash<string>{}(logline.substr(curpos));
+                //End of the "LOG:" entry
+                LOGEnd:;
                 break;
                 }
             case 'D' :{
