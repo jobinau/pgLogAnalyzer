@@ -22,7 +22,7 @@ using namespace std;
 class logFileParser {
 private:
     ifstream& logfile;
-    const vector<tuple<char,int,int,char>>& loglinelocation;
+    const vector<tuple<char,int,int,char>>& loglinelocation;   //Refer readme fore details of each of these fields
     bool flushPending; //multi line parsing is pending for flusing.
     
     string curUser;

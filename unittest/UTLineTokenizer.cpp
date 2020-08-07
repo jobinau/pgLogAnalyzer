@@ -42,5 +42,36 @@ int main(int argc, char* argv[]) {
         cout<<"Match failed\n";
     }
 
+    cout<<"=========Test Case 4=============\n";
+    lineFormat="%t %u %d %h ";
+    tokenizer.genExprStr(lineFormat);
+    tokenizer.clearLogLineLocation();
+    if (tokenizer.prepareLogLineLocation("2020-06-06 17:40:58 IST postgres postgres 127.0.0.1 LOG:  duration: 50.743 ms  statement: vacuum analyze pgbench_branches")){
+        tokenizer.printloglinelocation();
+    }else{
+        cout<<"Match failed\n";
+    }
+
+    cout<<"=========Test Case 4.1=============\n";
+    lineFormat="%t %u %d %h ";
+    tokenizer.genExprStr(lineFormat);
+    tokenizer.clearLogLineLocation();
+    if (tokenizer.prepareLogLineLocation("2020-06-06 17:39:16 IST postgres postgres [local] LOG:  duration: 92.673 ms  statement: alter table pgbench_branches add primary key (bid)")){
+        tokenizer.printloglinelocation();
+    }else{
+        cout<<"Match failed\n";
+    }
+
+
+    cout<<"=========Test Case 5=============\n";
+    lineFormat="%p-%s-%c-%l-%h-%u-%d-%m";
+    tokenizer.genExprStr(lineFormat);
+    tokenizer.clearLogLineLocation();
+    if (tokenizer.prepareLogLineLocation("31189-2020-08-04 00:00:04 PDT-5f290774.79d5-1-oshnodeapp-10-103-6-85.us-east4-c.c.saas-cstack-use4-231700.internal-sc52022udwh-sc52022udwh-2020-08-04 00:00:05.096 PDTLOG:  process 31189 still waiting for AccessShareLock on relation 51098774 of database 1814248 after 1000.193 ms at character 317")){
+        tokenizer.printloglinelocation();
+    }else{
+        cout<<"Match failed\n";
+    }
+
     //TODO : Add more test cases for unit testing
 }

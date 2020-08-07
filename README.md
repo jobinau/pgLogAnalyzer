@@ -1,7 +1,7 @@
 # pgLogAnalyser
 Modern C++ framework and program to analyze postgres logs. Speed matters.
 This designed to be modular so that the parts of the code can be reused.
-Used only C++ STLs like regex,vector,tuple etc for highest portability.
+Used onlypgbench -c 4 -t C++ STLs like regex,vector,tuple etc for highest portability.
 
 ## Features
 * Created as a generic Simple example of Parsing log file of Postgres.
@@ -13,6 +13,14 @@ Used only C++ STLs like regex,vector,tuple etc for highest portability.
 The system Need to have a compiler with Standard C++11 support to build the source code. GCC 6+ or Clang/LLVM version 8+ is recommended.  
 Go to directory and just run:  
 ```./make``` 
+</br>After building the root folder you may build the Unit Test codes
+
+```
+cd unittest/
+./make
+```
+Running the UTParser can demonstrage how sample files are parsed and contents are extracted
+
 
 ## Usage 
 ```./pgloganalyzer -f postgres.log```  

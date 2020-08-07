@@ -225,6 +225,8 @@ bool logFileParser::parse(){
         totChars = totChars + logline.length();
         totLines++;
     } 
+    //if there is still something to be flused, flush it
+    if (flushPending) doFlush();
     cout<<"Tot. Chars :"<<totChars<<" Tot. Lines :"<< totLines <<" Tot. Error Lines :" << totErrorLines <<endl;
     return true;
 }

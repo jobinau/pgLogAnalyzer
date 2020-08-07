@@ -16,12 +16,12 @@ void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     auto loc=exprStr.find("%t");
 
     if (loc<200) 
-        exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+[\.0-9]) [A-Z]{3})EXPR");
+        exprStr.replace(loc, 2 , R"EXPR((\d+-\d+-\d+ \d+:\d+:\d+[\.0-9]) [A-Z]{3})EXPR");
 
     //%m => Timestamp with Millisecods
     loc=exprStr.find("%m");
     if (loc<200)
-        exprStr.replace(loc, 2 , R"EXPR(^(\d+-\d+-\d+ \d+:\d+:\d+\.\d+) [A-Z]{3})EXPR");
+        exprStr.replace(loc, 2 , R"EXPR((\d+-\d+-\d+ \d+:\d+:\d+\.\d+) [A-Z]{3})EXPR");
 
     //%s => Timestamp of the Process startup
     loc = exprStr.find("%s");
@@ -60,12 +60,21 @@ void lineTokenizer::genExprStr(const string & lineFormat_in) noexcept {
     
     loc = exprStr.find("%h");
     if (loc < 200)
-        exprStr.replace(loc,2,R"EXPR([\w\.\[\]]*)EXPR");
+        //exprStr.replace(loc,2,R"EXPR([\w\.\[\]]*)EXPR");
+        exprStr.replace(loc,2,R"EXPR(([\w-.]*\.\w*))EXPR");
+
+    loc = exprStr.find("%c");
+    if (loc < 200)
+        exprStr.replace(loc,2,R"EXPR([A-Fa-f0-9]{2,8}\.[A-Fa-f0-9]{2,8})EXPR");
+        //possibly replace with : \w{2,9}\.\w{2,9}
 
     //if %q is found, replace it with null string
     loc = exprStr.find("%q");
     if (loc < 200) 
         exprStr.replace(loc,2,R"EXPR()EXPR");
+
+    //insert ^ character at the begining
+    exprStr.insert(0,1,'^');
 
     cout<<"exprStr is :"<<exprStr<<endl;
     regex expr(exprStr);
