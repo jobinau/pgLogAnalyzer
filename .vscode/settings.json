@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "iostream": "cpp",
+        "tuple": "cpp",
+        "iosfwd": "cpp"
+    }
+}

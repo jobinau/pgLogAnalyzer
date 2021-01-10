@@ -33,11 +33,13 @@ bool logFileParser::parse(){
     int totErrorLines = 0;
     int unixTime = 0;
     size_t curpos = 0;    //current position in a particular  line
+    char curchar;
     char PreviousPatternChar = ' ';     //Past pattern character for backward reference
     size_t endoffset;
     size_t linelength = 0;
     string logline;
     struct tm tm{};
+    string sessionid;   //variable to hold the session id
     flushPending = false;
     cout<<"==============Again Starting  =============="<<endl;
     while (getline(logfile, logline))
@@ -59,7 +61,8 @@ bool logFileParser::parse(){
 
                 //Boh m with millisecods and t without milli seconds are handled similar way
                 case 'm':
-                case 't': 
+                case 't':
+                case 's': 
                     //Check whether initial part of line can be treated as timestamp                   
                     if(strptime(logline.substr(curpos,19).c_str(), "%Y-%m-%d %H:%M:%S", &tm)== nullptr){
                         totErrorLines++;
@@ -67,11 +70,28 @@ bool logFileParser::parse(){
                     }
                     //Unix timestamp is generated using mktime. verified.
                     unixTime = mktime(&tm);
-                    cout<<"TS : "<<unixTime;
+                    
                     curpos = curpos + 22;
                     //if it there is milliseconds, additional 4 positions (including the point) are to be incremented.
                     if (get<0>(i) == 'm') curpos = curpos + 4;
+                    if (get<0>(i) == 's') {
+                        cout<<" Process TS:"<<unixTime;
+                    }
+                    else{
+                        cout<<" Log TS : "<<unixTime;
+                    }
                     break;
+                case 'c':
+                    curchar = logline[curpos];
+                    //if the character is part of hex values or a dot it is part of session id
+                    sessionid = "";
+                    while ((int(curchar) > 47 && int(curchar) < 58) || (int(curchar) > 64 && int(curchar) < 71) || (int(curchar) > 96 && int(curchar) < 103) || int(curchar) == 46){
+                        sessionid.push_back(curchar);
+                        curpos++;
+                        curchar = logline[curpos];
+                    }
+                    cout<<" Session :" << sessionid ; 
+                    break;                    
                 case 'q' : //Abrupt end of log_line_prefix for non sessions
                     if (logline.substr(curpos,3) == "LOG")
                         goto LOGpart;
