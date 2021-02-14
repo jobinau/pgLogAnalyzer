@@ -8,262 +8,315 @@
 #include <ctime>
 #include <iostream>
 
-logFileParser::logFileParser(ifstream & logfile_in, const vector<tuple<char,int,int,char>> & loglinelocation_in)
-            :logfile(logfile_in),loglinelocation(loglinelocation_in)
+logFileParser::logFileParser(ifstream &logfile_in, const vector<tuple<char, int, int, char>> &loglinelocation_in)
+    : logfile(logfile_in), loglinelocation(loglinelocation_in)
 {
-  //initialize class variables before parsing starts
-  flushPending = false;
-  curDuration = 0;
-  curStatementType= 0;  
+    //initialize class variables before parsing starts
+    flushPending = false;
+    curDuration = 0;
+    curStatementType = 0;
 }
-
 
 logFileParser::~logFileParser() = default;
 
-bool logFileParser::resetFD(){
+bool logFileParser::resetFD()
+{
     logfile.clear();
     logfile.seekg(0, ios::beg);
     return true;
 }
 
-bool logFileParser::parse(){
-    
+bool logFileParser::parse()
+{
+
     int totChars = 0;
     int totLines = 0;
     int totErrorLines = 0;
-    int unixTime = 0;
-    size_t curpos = 0;    //current position in a particular  line
+    time_t unixTime = 0;
+    char ts_string[26];   //Used for debugging timestamp info by converting it into string.
+    size_t curpos = 0; //current position in a particular  line
     char curchar;
-    char PreviousPatternChar = ' ';     //Past pattern character for backward reference
+    char PreviousPatternChar = ' '; //Past pattern character for backward reference
     size_t endoffset;
     size_t linelength = 0;
     string logline;
-    struct tm tm{};
-    string sessionid;   //variable to hold the session id
+    struct tm tm
+    {
+    };
+    string sessionid; //variable to hold the session id
     flushPending = false;
-    cout<<"==============Again Starting  =============="<<endl;
+    cout << "==============Again Starting  ==============" << endl;
     while (getline(logfile, logline))
     {
         //if the line is continuation of previous SQL statement, append the line to statement and continue the loop
-        if(flushPending && (isspace(logline[0]) != 0) ){
-                curStatement = curStatement + " " + trim_inplace(logline);
-                continue;
+        cout<<"\n";   //New line to screen to help debugging
+        if (flushPending && (isspace(logline[0]) != 0))
+        {
+            curStatement = curStatement + " " + trim_inplace(logline);
+            continue;
         }
-        
+
         //if the line is a new log entry
         linelength = logline.length();
-        for (auto i : loglinelocation){
+        for (auto i : loglinelocation)
+        {
             //cout<<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<"),";
             //if the previous pattern was 'q', the curpos need not forward
-            if(PreviousPatternChar != 'q') 
+            if (PreviousPatternChar != 'q')
                 curpos = curpos + get<2>(i);
-            switch(get<0>(i)){
+            switch (get<0>(i))
+            {
 
-                //Boh m with millisecods and t without milli seconds are handled similar way
-                case 'm':
-                case 't':
-                case 's': 
-                    //Check whether initial part of line can be treated as timestamp                   
-                    if(strptime(logline.substr(curpos,19).c_str(), "%Y-%m-%d %H:%M:%S", &tm)== nullptr){
-                        totErrorLines++;
-                        goto nextline;
-                    }
-                    //Unix timestamp is generated using mktime. verified.
-                    unixTime = mktime(&tm);
-                    
-                    curpos = curpos + 22;
-                    //if it there is milliseconds, additional 4 positions (including the point) are to be incremented.
-                    if (get<0>(i) == 'm') curpos = curpos + 4;
-                    if (get<0>(i) == 's') {
-                        cout<<" Process TS:"<<unixTime;
-                    }
-                    else{
-                        cout<<" Log TS : "<<unixTime;
-                    }
-                    break;
-                case 'c':
+            //Boh m with millisecods and t without milli seconds are handled similar way
+            case 'm':
+            case 't':
+            case 's':
+                //Check whether initial part of line can be treated as timestamp
+                if (strptime(logline.substr(curpos, 19).c_str(), "%Y-%m-%d %H:%M:%S", &tm) == nullptr)
+                { // On Error
+                    totErrorLines++;
+                    goto nextline;
+                }
+                /*Unix timestamp is generated using mktime. verified by printing as follows. 
+                Timezone is discarded and every timestamp is treated as local timestamp
+                cout << " Saved timestamp : " << logline.substr(curpos, 19);*/
+                unixTime = mktime(&tm);
+
+                curpos = curpos + 22;
+                //if it there is milliseconds, additional 4 positions (including the point) are to be incremented.
+                if (get<0>(i) == 'm')
+                    curpos = curpos + 4;
+                if (get<0>(i) == 's')
+                {
+                    //cout<<" Process TS:"<<unixTime <<"\n";
+                    strftime(ts_string, 26, "%Y-%m-%d %H:%M:%S", localtime(&unixTime));
+                    printf("Process TS : %s", ts_string);
+                    // printf("Process TS : %s", asctime(localtime(&unixTime)));
+                }
+                else
+                {
+                    cout << " Log TS : " << unixTime;
+                }
+                break;
+            case 'c':   //Session ID. example 5f290774.79d5 (ProcessStarttime.Processid)
+                curchar = logline[curpos];
+                //if the character is part of hex values or a dot it is part of session id
+                sessionid = "";
+                while ((int(curchar) > 47 && int(curchar) < 58) || (int(curchar) > 64 && int(curchar) < 71) || (int(curchar) > 96 && int(curchar) < 103) || int(curchar) == 46)
+                {
+                    sessionid.push_back(curchar);
+                    curpos++;
                     curchar = logline[curpos];
-                    //if the character is part of hex values or a dot it is part of session id
-                    sessionid = "";
-                    while ((int(curchar) > 47 && int(curchar) < 58) || (int(curchar) > 64 && int(curchar) < 71) || (int(curchar) > 96 && int(curchar) < 103) || int(curchar) == 46){
-                        sessionid.push_back(curchar);
-                        curpos++;
-                        curchar = logline[curpos];
-                    }
-                    cout<<" Session :" << sessionid ; 
-                    break;                    
-                case 'q' : //Abrupt end of log_line_prefix for non sessions
-                    if (logline.substr(curpos,3) == "LOG")
-                        goto LOGpart;
-                    break;
-                case 'p' : 
-                    endoffset =  logline.find(get<3>(i),curpos)-curpos;
-                    //cout << " end : " << endoffset ;
-                    cout<<" PID: " << logline.substr(curpos,endoffset);
-                    curpos = curpos + endoffset - 1;
-                    break;
-                case 'l' :{
-                    endoffset =  logline.find(get<3>(i),curpos)-curpos;
-                    //cout << " end : " << endoffset ;
-                    cout<<" Session: " << logline.substr(curpos,endoffset);
-                    curpos = curpos + endoffset - 1;
-                    break;
                 }
-                case 'u' :
-                    endoffset =  logline.find(get<3>(i),curpos)-curpos;
-                    //cout << " end : " << endoffset ;
-                    cout<<" USER : " << logline.substr(curpos,endoffset);
-                    curpos = curpos + endoffset - 1;
-                    break;
-                case 'a' : {
-                    endoffset =  logline.find(get<3>(i),curpos)-curpos;
-                    //cout << " end : " << endoffset ;
-                    cout<<" APP : " << logline.substr(curpos,endoffset);
-                    curpos = curpos + endoffset - 1;
-                    break;
-                }
-                case 'd' : {
-                    endoffset =  logline.find(get<3>(i),curpos)-curpos;
-                    //cout << " end : " << endoffset ;
-                    cout<<" DB : " << logline.substr(curpos,endoffset);
-                    curpos = curpos + endoffset - 1;
-                    break;
-                }
-                case 'h' : {
-                    endoffset =  logline.find(get<3>(i),curpos)-curpos;
-                    //cout << " end : " << endoffset ;
-                    cout<<" host : " << logline.substr(curpos,endoffset);
-                    curpos = curpos + endoffset - 1;
-                    break;
-                }
-            } 
+                cout << " Session :" << sessionid << " ";
+                break;
+            case 'q': //Abrupt end of log_line_prefix for non sessions
+                if (logline.substr(curpos, 3) == "LOG")
+                    goto LOGpart;
+                break;
+            case 'p':
+                endoffset = logline.find(get<3>(i), curpos) - curpos;
+                //cout << " end : " << endoffset ;
+                cout << " PID: " << logline.substr(curpos, endoffset) << " ";
+                curpos = curpos + endoffset - 1;
+                break;
+            case 'l':  //Number of the log line for each session or process, starting at 1
+            {
+                endoffset = logline.find(get<3>(i), curpos) - curpos;
+                //cout << " end : " << endoffset ;
+                cout << " SessionLine: " << logline.substr(curpos, endoffset);
+                curpos = curpos + endoffset - 1;
+                break;
+            }
+            case 'u':
+                endoffset = logline.find(get<3>(i), curpos) - curpos;
+                //cout << " end : " << endoffset ;
+                cout << " USER : " << logline.substr(curpos, endoffset);
+                curpos = curpos + endoffset - 1;
+                break;
+            case 'a':
+            {
+                endoffset = logline.find(get<3>(i), curpos) - curpos;
+                //cout << " end : " << endoffset ;
+                cout << " APP : " << logline.substr(curpos, endoffset);
+                curpos = curpos + endoffset - 1;
+                break;
+            }
+            case 'd':
+            {
+                endoffset = logline.find(get<3>(i), curpos) - curpos;
+                //cout << " end : " << endoffset ;
+                cout << " DB : " << logline.substr(curpos, endoffset);
+                curpos = curpos + endoffset - 1;
+                break;
+            }
+            case 'h':
+            {
+                endoffset = logline.find(get<3>(i), curpos) - curpos;
+                //cout << " end : " << endoffset ;
+                cout << " host : " << logline.substr(curpos, endoffset);
+                curpos = curpos + endoffset - 1;
+                break;
+            }
+            }
             //Store the Previous Patter Char for next loop.
             PreviousPatternChar = get<0>(i);
         }
         //after the prefix part of the line, LOG:
-        curpos = curpos+ 2;
-        LOGpart:;
+        curpos = curpos + 2;
+    LOGpart:;
         //If there is whitespace at the end of the prefix, just advance
-        while(logline[curpos]==' ') curpos++;
-        switch (logline[curpos]){
-            case 'L' :{   //LOG:
-                if (flushPending) { doFlush();}
-                curpos = logline.find(':',curpos);
-                curpos++;
-                while(curpos < linelength){
-                    char i = logline[curpos];
-                    char ii= logline[curpos-1];
-                    if(static_cast<int>(ii) == 32 && static_cast<int>(i) > 96 && static_cast<int>(i) < 123){
-                        switch (i){
-                            case 'e':{   //execute :
-                                if(logline.compare(curpos,3,"exe") == 0){
-                                    StatementHandler(logline,curpos,endoffset);
-                                }
-                                break;
-                            }
-                            case 'd' :{  //duration :
-                                if (logline.compare(curpos,4,"dura") == 0){
-                                    cout<<" Got Duration : ";
-                                    GetDuration(logline,curpos,endoffset);
-                                    locateNextChar(logline,curpos,endoffset);
-                                    //cout<<"Remaining : "<<logline.substr(curpos)<<endl;
-                                    goto whilecontinue;
-                                } else {
-                                    goto UnkownLOGentry;
-                                }
-                                break;
-                            }
-                            case 's' : { //statement :
-                                if ( logline.compare(curpos,5,"state") == 0){
-                                //cout <<" Got Statement : ";
-                                 StatementHandler(logline,curpos,endoffset);
-                                }
-                                break;
-                            }
-                            case 'c' :
-                                if ( logline.compare(curpos,19,"checkpoint complete") == 0){
-                                    //cout<<"Checkpoint:";
-                                    curpos = curpos + 19;
-                                    getCheckpointDtls(logline,curpos,endoffset);
-                                }
-                                break;
-                            default :
-                                UnkownLOGentry:;
-                                cout<<" UnkownLOGentry :"<< logline.substr(curpos);
-                                goto LOGEnd;
-
+        while (logline[curpos] == ' ')
+            curpos++;
+        switch (logline[curpos])
+        {
+        case 'L':
+        { //LOG:
+            if (flushPending)
+            {
+                doFlush();
+            }
+            curpos = logline.find(':', curpos);
+            curpos++;
+            while (curpos < linelength)
+            {
+                char i = logline[curpos];
+                char ii = logline[curpos - 1];
+                if (static_cast<int>(ii) == 32 && static_cast<int>(i) > 96 && static_cast<int>(i) < 123)
+                {
+                    switch (i)
+                    {
+                    case 'e':
+                    { //execute :
+                        if (logline.compare(curpos, 3, "exe") == 0)
+                        {
+                            StatementHandler(logline, curpos, endoffset);
                         }
-                        //break;
+                        break;
                     }
-                    curpos++;
-                    whilecontinue:;
+                    case 'd':
+                    { //duration :
+                        if (logline.compare(curpos, 4, "dura") == 0)
+                        {
+                            cout << " Got Duration : ";
+                            GetDuration(logline, curpos, endoffset);
+                            locateNextChar(logline, curpos, endoffset);
+                            //cout<<"Remaining : "<<logline.substr(curpos)<<endl;
+                            goto whilecontinue;
+                        }
+                        else
+                        {
+                            goto UnkownLOGentry;
+                        }
+                        break;
+                    }
+                    case 's':
+                    { //statement :
+                        if (logline.compare(curpos, 5, "state") == 0)
+                        {
+                            //cout <<" Got Statement : ";
+                            StatementHandler(logline, curpos, endoffset);
+                        }
+                        break;
+                    }
+                    case 'c':
+                        if (logline.compare(curpos, 19, "checkpoint complete") == 0)
+                        {
+                            //cout<<"Checkpoint:";
+                            curpos = curpos + 19;
+                            getCheckpointDtls(logline, curpos, endoffset);
+                        }
+                        break;
+                    default:
+                    UnkownLOGentry:;
+                        cout << " UnkownLOGentry :" << logline.substr(curpos);
+                        goto LOGEnd;
+                    }
+                    //break;
                 }
-                //End of the "LOG:" entry
-                LOGEnd:;
-                break;
-                }
-            case 'D' :{
-                cout << " Got a DETAILS";
-                break;
+                curpos++;
+            whilecontinue:;
             }
-            case 'W' :{
-                cout << " Got a WARNING";
-                break;
-            }
-            case 'E' :{
-                cout << " Got a ERROR :" << logline.substr(curpos);
-                break;
-            }
-            case 'F' :{
-                cout << " Got a FATAL";
-                break;
-            }
-            case 'P' :{
-                cout << " Got a PANIC";
-                break;
-            }
-            case 'S' :{
-                //cout << " Got a STATEMENT"<<logline.substr(curpos);
-                StatementHandler(logline,curpos,endoffset);
-                break;
-            }
-            case 'H' :{
-                cout << " Got a HINT";
-                HintHandler(logline,curpos,endoffset);
-                break;
-            }       
-            case 'C' :{
-                cout << " Got a CONTEXT";
-                break;
-            }       
+        //End of the "LOG:" entry
+        LOGEnd:;
+            break;
         }
-        
+        case 'D':
+        {
+            cout << " Got a DETAILS";
+            break;
+        }
+        case 'W':
+        {
+            cout << " Got a WARNING";
+            break;
+        }
+        case 'E':
+        {
+            cout << " Got a ERROR :" << logline.substr(curpos);
+            break;
+        }
+        case 'F':
+        {
+            cout << " Got a FATAL";
+            break;
+        }
+        case 'P':
+        {
+            cout << " Got a PANIC";
+            break;
+        }
+        case 'S':
+        {
+            //cout << " Got a STATEMENT"<<logline.substr(curpos);
+            StatementHandler(logline, curpos, endoffset);
+            break;
+        }
+        case 'H':
+        {
+            cout << " Got a HINT";
+            HintHandler(logline, curpos, endoffset);
+            break;
+        }
+        case 'C':
+        {
+            cout << " Got a CONTEXT";
+            break;
+        }
+        }
+
         //Handle non-prefix section : LOG|WARNING|ERROR|FATAL|PANIC|DETAIL|STATEMENT|HINT|CONTEXT|LOCATION
-        cout<<endl;
-        nextline:;
+        cout << endl;
+    nextline:;
         curpos = 0;
         totChars = totChars + logline.length();
         totLines++;
-    } 
+    }
     //if there is still something to be flused, flush it
-    if (flushPending) doFlush();
-    cout<<"Tot. Chars :"<<totChars<<" Tot. Lines :"<< totLines <<" Tot. Error Lines :" << totErrorLines <<endl;
+    if (flushPending)
+        doFlush();
+    cout << "Tot. Chars :" << totChars << " Tot. Lines :" << totLines << " Tot. Error Lines :" << totErrorLines << endl;
     return true;
 }
 
 //Handle SQL statements
-void logFileParser::StatementHandler(string & logline,size_t & curpos,size_t & endoffset){
-    endoffset = logline.find(':',curpos);
+void logFileParser::StatementHandler(string &logline, size_t &curpos, size_t &endoffset)
+{
+    endoffset = logline.find(':', curpos);
     //line for debugging
     //auto tmpStr = logline.substr(curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset;
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset;
     }
     //line for debugging
     //tmpStr = logline.substr(curpos);
-    for (auto i : logline.substr(curpos)){
-        if(static_cast<int>(i) > 64 && static_cast<int>(i) < 123){
-            switch (i){
+    for (auto i : logline.substr(curpos))
+    {
+        if (static_cast<int>(i) > 64 && static_cast<int>(i) < 123)
+        {
+            switch (i)
+            {
             case 's':
             case 'S':
                 curStatementType = 1;
@@ -284,11 +337,13 @@ void logFileParser::StatementHandler(string & logline,size_t & curpos,size_t & e
                 break;
             case 'd':
             case 'D':
-                if (strUpper(logline.substr(curpos,4)) == "DELE"){
+                if (strUpper(logline.substr(curpos, 4)) == "DELE")
+                {
                     curStatementType = 4;
                     //cout<<" Delete Statement: "<<endl;
                 }
-                if (strUpper(logline.substr(curpos,4)) == "DROP"){
+                if (strUpper(logline.substr(curpos, 4)) == "DROP")
+                {
                     curStatementType = 21;
                     //cout<<" Drop Statement: "<<endl;
                 }
@@ -296,7 +351,8 @@ void logFileParser::StatementHandler(string & logline,size_t & curpos,size_t & e
                 break;
             case 'a':
             case 'A':
-                if (strUpper(logline.substr(curpos,4)) == "ALTE"){
+                if (strUpper(logline.substr(curpos, 4)) == "ALTE")
+                {
                     curStatementType = 22;
                     //cout<<" Alter Statement: "<<endl;
                 }
@@ -304,15 +360,18 @@ void logFileParser::StatementHandler(string & logline,size_t & curpos,size_t & e
                 break;
             case 'c':
             case 'C':
-                if (strUpper(logline.substr(curpos,4)) == "COPY"){
+                if (strUpper(logline.substr(curpos, 4)) == "COPY")
+                {
                     curStatementType = 5;
                     //cout<<"Copy statement"<<endl;
                 }
-                else if (strUpper(logline.substr(curpos,4)) == "CREA"){
+                else if (strUpper(logline.substr(curpos, 4)) == "CREA")
+                {
                     curStatementType = 23;
                     //cout<<" Create Statement:"<<endl;
                 }
-                else if (strUpper(logline.substr(curpos,4)) == "COMM"){
+                else if (strUpper(logline.substr(curpos, 4)) == "COMM")
+                {
                     curStatementType = 6;
                     //cout<<" Commit Statement:"<<endl;
                 }
@@ -337,96 +396,116 @@ void logFileParser::StatementHandler(string & logline,size_t & curpos,size_t & e
         }
         curpos++;
     }
-    forexit:;
+forexit:;
     //cout<<"\""<<logline.substr(curpos)<<"\""<<endl;
     curStatement = logline.substr(curpos);
     flushPending = true;
     curpos = logline.length();
 }
 
-void logFileParser::HintHandler(string & logline,size_t & curpos,size_t & endoffset){
-    endoffset = logline.find(':',curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset;
+void logFileParser::HintHandler(string &logline, size_t &curpos, size_t &endoffset)
+{
+    endoffset = logline.find(':', curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset;
     }
-    for (char i : logline.substr(curpos)){
-        if( static_cast<int>(i) >  64 && static_cast<int>(i) <= 123 ) { break;
-}
-        curpos++;
-    }
-    cout<<logline.substr(curpos)<<endl;
-}
-
-void logFileParser::GetDuration(string & logline,size_t & curpos,size_t & endoffset){
-    endoffset = logline.find(':',curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset;
-    }
-    
-    for (auto i : logline.substr(curpos)){
-        if( (static_cast<int>(i) > 47) && (static_cast<int>(i) < 58) ){
+    for (char i : logline.substr(curpos))
+    {
+        if (static_cast<int>(i) > 64 && static_cast<int>(i) <= 123)
+        {
             break;
         }
         curpos++;
     }
-    
-    endoffset = logline.find(' ',curpos) - curpos;
-    curDuration = static_cast<int>(stod(logline.substr(curpos,endoffset))*1000);
-    cout<<logline.substr(curpos,endoffset)<< " "<<curDuration;
+    cout << logline.substr(curpos) << endl;
+}
+
+void logFileParser::GetDuration(string &logline, size_t &curpos, size_t &endoffset)
+{
+    endoffset = logline.find(':', curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset;
+    }
+
+    for (auto i : logline.substr(curpos))
+    {
+        if ((static_cast<int>(i) > 47) && (static_cast<int>(i) < 58))
+        {
+            break;
+        }
+        curpos++;
+    }
+
+    endoffset = logline.find(' ', curpos) - curpos;
+    curDuration = static_cast<int>(stod(logline.substr(curpos, endoffset)) * 1000);
+    cout << logline.substr(curpos, endoffset) << " " << curDuration;
     curpos = curpos + endoffset + 3;
 }
 
-void logFileParser::locateNextChar(string & logline,size_t & curpos,size_t &  /*endoffset*/){
-    for (auto i : logline.substr(curpos)){
-        if(static_cast<int>(i) > 64 && static_cast<int>(i) < 123) { break;
-}
+void logFileParser::locateNextChar(string &logline, size_t &curpos, size_t & /*endoffset*/)
+{
+    for (auto i : logline.substr(curpos))
+    {
+        if (static_cast<int>(i) > 64 && static_cast<int>(i) < 123)
+        {
+            break;
+        }
         curpos++;
     }
 }
 
-void logFileParser::getCheckpointDtls(string & logline,size_t & curpos,size_t & endoffset) noexcept{
-    endoffset = logline.find(':',curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset+1;
+void logFileParser::getCheckpointDtls(string &logline, size_t &curpos, size_t &endoffset) noexcept
+{
+    endoffset = logline.find(':', curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset + 1;
     }
-    
-    endoffset = logline.find("wro",curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset+6;
-    }
-    
-    //cout<<"Checkpoint Dtls :"<<logline.substr(curpos,20);
-    endoffset = logline.find(' ',curpos);
-    cout<<"Number of buffers :"<<stoi(logline.substr(curpos,endoffset-curpos));
-    
-    endoffset = logline.find("total",curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset+6;
-    }
-    endoffset = logline.find(' ',curpos);
-    cout<<"time taken : "<<stod(logline.substr(curpos,endoffset-curpos));
 
-    endoffset = logline.find("sync",curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset+11;
+    endoffset = logline.find("wro", curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset + 6;
     }
-    endoffset = logline.find(' ',curpos);
-    cout<<"Files sync : "<<stoi(logline.substr(curpos,endoffset-curpos));
-    
-    endoffset = logline.find("dista",curpos);
-    if (endoffset != string::npos){
-                curpos = endoffset+9;
+
+    //cout<<"Checkpoint Dtls :"<<logline.substr(curpos,20);
+    endoffset = logline.find(' ', curpos);
+    cout << "Number of buffers :" << stoi(logline.substr(curpos, endoffset - curpos));
+
+    endoffset = logline.find("total", curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset + 6;
     }
-    endoffset = logline.find(' ',curpos);
-    cout<<"Distance : "<<stoi(logline.substr(curpos,endoffset-curpos));
+    endoffset = logline.find(' ', curpos);
+    cout << "time taken : " << stod(logline.substr(curpos, endoffset - curpos));
+
+    endoffset = logline.find("sync", curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset + 11;
+    }
+    endoffset = logline.find(' ', curpos);
+    cout << "Files sync : " << stoi(logline.substr(curpos, endoffset - curpos));
+
+    endoffset = logline.find("dista", curpos);
+    if (endoffset != string::npos)
+    {
+        curpos = endoffset + 9;
+    }
+    endoffset = logline.find(' ', curpos);
+    cout << "Distance : " << stoi(logline.substr(curpos, endoffset - curpos));
 }
 
-string& logFileParser::normalizequery(string& querysting) noexcept{
+string &logFileParser::normalizequery(string &querysting) noexcept
+{
     //remove comments
     //convert query to lowercase
     //remove extra space and make it single space
     //remove " begin " if any
-    //remove string content comes within '' 
+    //remove string content comes within ''
     //remove NULL parameter
     //remove numbers
     //remove hexa decimal numbers
@@ -435,21 +514,25 @@ string& logFileParser::normalizequery(string& querysting) noexcept{
     return querysting;
 }
 
-void logFileParser::storeSqlidSqlmap(std::string& sql) noexcept{
+void logFileParser::storeSqlidSqlmap(std::string &sql) noexcept
+{
     //Nomalize sql before storing
     cleanExtraWhitespace(sql);
     SqlidSqlMap[std::hash<std::string>{}(sql)] = sql;
 }
 
-void logFileParser::printSqlidSqlmap() noexcept{
-    cout<<" Number of Elements are"<<SqlidSqlMap.size()<<endl;
-    for (auto& kv : SqlidSqlMap) {
-        cout<<kv.first<<"--->"<<kv.second<<endl;
+void logFileParser::printSqlidSqlmap() noexcept
+{
+    cout << " Number of Elements are" << SqlidSqlMap.size() << endl;
+    for (auto &kv : SqlidSqlMap)
+    {
+        cout << kv.first << "--->" << kv.second << endl;
     }
 }
 
-void logFileParser::doFlush(){
-    cout<<" Last Statement is :"<<curStatement<<endl;
+void logFileParser::doFlush()
+{
+    cout << " Last Statement is :" << curStatement << endl;
     storeSqlidSqlmap(curStatement);
     flushPending = false;
 }
