@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
     logFileParser FileParser(logfile,loglinelocation);  //Parameters are passed in as reference
 
-/* 
+ 
     cout<<"=====Test case 1 : Line format is :%m [%p] %q%u@%d ============\n";
     loglinelocation = {{'m', 0, 0, ' '}, {'p', 1, 3, ']'}, {'q', 2, 3, ' '}, {'u', 3, 1, '@'}, {'d', 4, 2, ' '}};
     logfile.open ("../samples/postgresql-2020-05-11_093620.log", std::ifstream::in);
@@ -41,17 +41,19 @@ int main(int argc, char *argv[])
 
 
      //Test case 3 : Line format is "%m [%p] "
+     //Check for Unknown log entries like startup / shutdown lines
     cout<<"======Test case 3 : Line format is : %t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h  ================\n";
     loglinelocation = {{'t',0,0,' '},{'p', 1, 3, ']'},{'l',2,5,'-'},{'u',3,10,','},{'d',4,5,','},{'a',5,6,','},{'h',6,9,' '}};
     logfile.open ("../samples/postgresql-2020-05-17_164935.log", std::ifstream::in);
     FileParser.parse();
     logfile.close();
-*/
+
 
     cout<<"======Test case 4 : Line format is : %p-%s-%c-%l-%h-%u-%d-%m  ================\n";
+    //Test for parse with regex parse(true) - Roberts complex log_line_prefix
     loglinelocation = {{'p',0,0,'-'}, {'s',1,2,'-'}, {'c',2,2,'-'}, {'l',3,2,'-'}, {'h',4,2,'-'}, {'u',5,2,'-'}, {'d',6,2,'-'}, {'m',7,2,' '}};
     logfile.open ("../samples/postgresql-2020-08-04_000000_UTParser.log", std::ifstream::in);
-    FileParser.parse();
+    FileParser.parse(true);
     logfile.close();
 
 }

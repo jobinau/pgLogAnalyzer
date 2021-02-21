@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     //Rest the file descriptor back to starting point of the file 
     //because tokenizer alrady advanced the file discriptor for verifying the log line
     FileParser.resetFD();
-    FileParser.parse(); //Optional paramter regEx is false by default
+    FileParser.parse();    //Optional paramter regEx is false by default
     FileParser.printSqlidSqlmap();
 
 //End of Parsing

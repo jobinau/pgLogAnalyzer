@@ -39,6 +39,7 @@ bool logFileParser::parse(bool regEx)
     char curchar;
     char PreviousPatternChar = ' '; //Past pattern character for backward reference
     const regex host_expr(R"EXPR([\w-.]*\.\w*)EXPR"); //regular expression to match hostnames contains hiphens and dots
+    smatch hostmatch; // host name match for the regular expression.
     size_t endoffset;
     size_t linelength = 0;
     string logline;
@@ -63,7 +64,7 @@ bool logFileParser::parse(bool regEx)
         for (auto i : loglinelocation)
         {
             //For Debugging each line of loglinelocation.  Make : make clean; make; cd unittest; make; cd ..
-            cout <<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<")," << endl;
+            //cout <<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<")," << endl;
             //if the previous pattern was 'q', the curpos need not forward
             if (PreviousPatternChar != 'q')
                 curpos = curpos + get<2>(i);
@@ -89,17 +90,12 @@ bool logFileParser::parse(bool regEx)
                 //if it there is milliseconds, additional 4 positions (including the point) are to be incremented.
                 if (get<0>(i) == 'm')
                     curpos = curpos + 4;
+                strftime(ts_string, 26, "%Y-%m-%d %H:%M:%S", localtime(&unixTime));
                 if (get<0>(i) == 's')
-                {
-                    //cout<<" Process TS:"<<unixTime <<"\n";
-                    strftime(ts_string, 26, "%Y-%m-%d %H:%M:%S", localtime(&unixTime));
-                    printf("Process TS : %s", ts_string);
-                    // printf("Process TS : %s", asctime(localtime(&unixTime)));
-                }
-                else
-                {
-                    cout << " Log TS : " << unixTime;
-                }
+                    cout<<" Process TS:"<<ts_string ;
+                else 
+                    cout << " Log TS : " << ts_string;
+
                 break;
             case 'c':   //Session ID. example 5f290774.79d5 (ProcessStarttime.Processid)
                 curchar = logline[curpos];
@@ -112,7 +108,7 @@ bool logFileParser::parse(bool regEx)
                     curchar = logline[curpos];
                 }
                 //captured session id
-                cout << " Session :" << sessionid << " ";
+                cout << " Session :" << sessionid ;
                 //Move back curpos to last character of the session id
                 curpos--;
                 break;
@@ -123,12 +119,12 @@ bool logFileParser::parse(bool regEx)
             case 'p':
                 endoffset = logline.find(get<3>(i), curpos) - curpos;
                 //cout << " end : " << endoffset ;
-                cout << " PID: " << logline.substr(curpos, endoffset) << " ";
+                cout << " PID: " << logline.substr(curpos, endoffset);
                 curpos = curpos + endoffset - 1;
                 break;
             case 'l':  //Number of the log line for each session or process, starting at 1
             {
-                cout << get<3>(i) << endl;
+                //cout << get<3>(i) << endl;
                 endoffset = logline.find(get<3>(i), curpos) - curpos;
                 //cout << " end : " << endoffset ;
                 cout << " SessionLine: " << logline.substr(curpos, endoffset);
@@ -159,9 +155,15 @@ bool logFileParser::parse(bool regEx)
             }
             case 'h':
             {
-                endoffset = logline.find(get<3>(i), curpos) - curpos;
-                //cout << " end : " << endoffset ;
-                cout << " host : " << logline.substr(curpos, endoffset);
+                if (regEx){
+                    regex_search(logline.cbegin()+curpos,logline.cend(),hostmatch,host_expr);
+                    cout << " Host Name :" << hostmatch.str(0);
+                    endoffset = hostmatch.str(0).length();
+                } else {
+                    endoffset = logline.find(get<3>(i), curpos) - curpos;
+                    //cout << " end : " << endoffset ;
+                    cout << " host : " << logline.substr(curpos, endoffset);
+                }
                 curpos = curpos + endoffset - 1;
                 break;
             }
