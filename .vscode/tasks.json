@@ -3,12 +3,12 @@
         {
             "type": "shell",
             "label": "build",
-            "command": "make", 
-            "group":{
+            "command": "make",
+            "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher":"$gcc"
+            "problemMatcher": "$gcc"
         }
     ],
     "version": "2.0.0"

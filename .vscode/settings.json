@@ -3,6 +3,16 @@
         "*.tcc": "cpp",
         "iostream": "cpp",
         "tuple": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "array": "cpp",
+        "bitset": "cpp",
+        "memory": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "utility": "cpp"
     }
 }

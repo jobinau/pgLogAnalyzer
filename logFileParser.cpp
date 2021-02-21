@@ -6,6 +6,7 @@
 #include "logFileParser.h"
 #include "Helper.h"
 #include <ctime>
+#include <regex>
 #include <iostream>
 
 logFileParser::logFileParser(ifstream &logfile_in, const vector<tuple<char, int, int, char>> &loglinelocation_in)
@@ -26,7 +27,7 @@ bool logFileParser::resetFD()
     return true;
 }
 
-bool logFileParser::parse()
+bool logFileParser::parse(bool regEx)
 {
 
     int totChars = 0;
@@ -37,6 +38,7 @@ bool logFileParser::parse()
     size_t curpos = 0; //current position in a particular  line
     char curchar;
     char PreviousPatternChar = ' '; //Past pattern character for backward reference
+    const regex host_expr(R"EXPR([\w-.]*\.\w*)EXPR"); //regular expression to match hostnames contains hiphens and dots
     size_t endoffset;
     size_t linelength = 0;
     string logline;
@@ -60,7 +62,8 @@ bool logFileParser::parse()
         linelength = logline.length();
         for (auto i : loglinelocation)
         {
-            //cout<<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<"),";
+            //For Debugging each line of loglinelocation.  Make : make clean; make; cd unittest; make; cd ..
+            cout <<"("<< get<0>(i)<<","<<get<1>(i)<<","<<get<2>(i)<<","<<get<3>(i)<<")," << endl;
             //if the previous pattern was 'q', the curpos need not forward
             if (PreviousPatternChar != 'q')
                 curpos = curpos + get<2>(i);
@@ -108,7 +111,10 @@ bool logFileParser::parse()
                     curpos++;
                     curchar = logline[curpos];
                 }
+                //captured session id
                 cout << " Session :" << sessionid << " ";
+                //Move back curpos to last character of the session id
+                curpos--;
                 break;
             case 'q': //Abrupt end of log_line_prefix for non sessions
                 if (logline.substr(curpos, 3) == "LOG")
@@ -122,6 +128,7 @@ bool logFileParser::parse()
                 break;
             case 'l':  //Number of the log line for each session or process, starting at 1
             {
+                cout << get<3>(i) << endl;
                 endoffset = logline.find(get<3>(i), curpos) - curpos;
                 //cout << " end : " << endoffset ;
                 cout << " SessionLine: " << logline.substr(curpos, endoffset);

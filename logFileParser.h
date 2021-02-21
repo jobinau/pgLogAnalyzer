@@ -39,7 +39,8 @@ public:
     //logFileParser(const logFileParser& orig);
     virtual ~logFileParser();
     bool resetFD();
-    bool parse();
+    //Default is not to use regex
+    bool parse(bool regEx = false);
     void StatementHandler(string & logline,size_t & curpos,size_t & endoffset);
     void HintHandler(string & logline,size_t & curpos,size_t & endoffset);
     void GetDuration(string & logline,size_t & curpos,size_t & endoffset);
